@@ -1,0 +1,30 @@
+BasedOnStyle: LLVM
+#
+AccessModifierOffset: -4
+AlignAfterOpenBracket: DontAlign
+AlignOperands: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: true
+ColumnLimit: 132
+IndentWidth: 4
+KeepEmptyLinesAtTheStartOfBlocks: false
+PointerAlignment: Left
+IncludeCategories:
+  - Regex:           '^<boost/'
+    Priority:        30
+  - Regex:           '^<libxslt/'
+    Priority:        21
+  - Regex:           '^<libxml/'
+    Priority:        20
+  - Regex:           '^.cbor/'
+    Priority:        15
+  - Regex:           '^.gcxp/'
+    Priority:        10
+  - Regex:           '^.guard/'
+    Priority:        5
+  - Regex:           '^<'
+    Priority:        100
+  - Regex:           '^"'
+    Priority:        1
