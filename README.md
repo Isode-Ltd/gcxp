@@ -3,7 +3,7 @@ Isode GCXP C++ Implementation
 
 This is the Isode C++ header-only implementation of GCXP.  This
 implementation is intended to be portable across a wide range of
-platforms, requiring C++11 or better, a corresponding Standard C
+platforms, requiring C++14 or better, a corresponding Standard C
 Library implementation, and
 [CBOR-lite](https://bitbucket.org/isode/cbor-lite).
 
@@ -35,6 +35,15 @@ ninja unit-test
 ```
 
 This also builds the example programs.
+
+More information about GCXP is available at
+[https://bitbucket.org/isode/gcxp/wiki/Home](https://bitbucket.org/isode/gcxp/wiki/Home).
+
+Contributing
+------------
+
+GCXP is open-source. Community contributions are welcomed. See
+[contributing guidelines](CONTRIBUTING.md) for more information.
 
 
 Copyright
