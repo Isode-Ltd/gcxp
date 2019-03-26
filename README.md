@@ -7,7 +7,7 @@ platforms, requiring C++11 or better, a corresponding Standard C
 Library implementation, and
 [CBOR-lite](https://bitbucket.org/isode/cbor-lite).
 
-The optional stream interface requires Boost [Asynchronous
+The example programs and stream interface requires Boost [Asynchronous
 I/O](http://www.boost.org/doc/libs/release/doc/html/boost_asio.html).
 
 The test framework requires [Boost
@@ -18,11 +18,13 @@ include [LLVM](https://llvm.org) (for clang++ and clang-format),
 [FreeBSD](http://FreeBSD.org), and Git.
 
   * [include/gcxp](./include/gcxp) - headers
+  * [consumer](./consumer) - consumer example program
+  * [producer](./producer) - producer example program
   * [unit](./unit) - unit tests
 
-To use, add the include folder to your include search path.
+To use the headers, just add the include folder to your include search path.
 
-To build the test code and run it, follow these steps
+To build the test code, follow these steps
 
 ```
 mkdir build
@@ -31,6 +33,9 @@ cmake -G Ninja ..
 ninja
 ninja unit-test
 ```
+
+This also builds the example programs.
+
 
 Copyright
 ---------
