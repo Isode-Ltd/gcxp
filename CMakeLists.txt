@@ -53,11 +53,15 @@ link_libraries(Threads::Threads)
 add_library(gcxp INTERFACE)
 target_include_directories(gcxp INTERFACE include/)
 
-add_custom_target(reformat
-    COMMAND sh tools/reformat.sh
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_subdirectory(consumer)
+add_subdirectory(producer)
 
 add_custom_target(unit-test COMMAND ./unit/unit --log_level=warning)
 add_custom_target(junit COMMAND mkdir -p test-results && ./unit/unit --logger=JUNIT,warning,test-results/results.xml)
 
 add_subdirectory(unit)
+
+add_custom_target(reformat
+    COMMAND sh tools/reformat.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
