@@ -3,11 +3,11 @@ Isode GCXP C++ Implementation
 
 This is the Isode C++ header-only implementation of GCXP.  This
 implementation is intended to be portable across a wide range of
-platforms, requiring C++11 or better, a corresponding Standard C
+platforms, requiring C++14 or better, a corresponding Standard C
 Library implementation, and
 [CBOR-lite](https://bitbucket.org/isode/cbor-lite).
 
-The optional stream interface requires Boost [Asynchronous
+The example programs and stream interface requires Boost [Asynchronous
 I/O](http://www.boost.org/doc/libs/release/doc/html/boost_asio.html).
 
 The test framework requires [Boost
@@ -18,11 +18,13 @@ include [LLVM](https://llvm.org) (for clang++ and clang-format),
 [FreeBSD](http://FreeBSD.org), and Git.
 
   * [include/gcxp](./include/gcxp) - headers
+  * [consumer](./consumer) - consumer example program
+  * [producer](./producer) - producer example program
   * [unit](./unit) - unit tests
 
-To use, add the include folder to your include search path.
+To use the headers, just add the include folder to your include search path.
 
-To build the test code and run it, follow these steps
+To build the test code, follow these steps
 
 ```
 mkdir build
@@ -31,6 +33,18 @@ cmake -G Ninja ..
 ninja
 ninja unit-test
 ```
+
+This also builds the example programs.
+
+More information about GCXP is available at
+[https://bitbucket.org/isode/gcxp/wiki/Home](https://bitbucket.org/isode/gcxp/wiki/Home).
+
+Contributing
+------------
+
+GCXP is open-source. Community contributions are welcomed. See
+[contributing guidelines](CONTRIBUTING.md) for more information.
+
 
 Copyright
 ---------
