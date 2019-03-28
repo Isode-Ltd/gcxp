@@ -31,9 +31,7 @@ add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
 
 include_directories(${PROJECT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include)
 
-set(Boost_ADDITIONAL_VERSIONS "1.62" "1.62.0" "1.62.1" "1.63" "1.63.1" "1.64" "1.64.1" "1.65" "1.65.0" "1.65.1" "1.66" "1.66.0")
-set(Boost_USE_STATIC_LIB ON)
-find_package(Boost 1.62 REQUIRED COMPONENTS unit_test_framework thread system)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework thread system)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_LOG_DYN_LINK)
 add_definitions(-DBOOST_NO_AUTO_PTR)
