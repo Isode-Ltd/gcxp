@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.9.5 FATAL_ERROR)
-project (guard)
+project (gcxp)
 
 if(POLICY CMP0076)
   cmake_policy(SET CMP0076 OLD)
@@ -8,11 +8,28 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+message(STATUS "C++ compiler is ${CMAKE_CXX_COMPILER_ID}")
+
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(WARNING "Not a 64-bit system! YMMV")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
 find_package(Git REQUIRED)
+
+add_compile_options(-O0)
+add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
+
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(-O0)
+    add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        add_compile_options(-Wno-implicit-fallthrough)
+    endif()
+endif()
 
 find_path(CBOR_LITE_INCLUDE_DIR cbor-lite)
 if ((NOT CBOR_LITE_INCLUDE_DIR) OR (NOT EXISTS ${CBOR_LITE_INCLUDE_DIR}))
@@ -23,11 +40,6 @@ if ((NOT CBOR_LITE_INCLUDE_DIR) OR (NOT EXISTS ${CBOR_LITE_INCLUDE_DIR}))
     message(STATUS "CBOR_LITE_INCLUDE_DIR=${CBOR_LITE_INCLUDE_DIR}")
 endif()
 include_directories(${CBOR_LITE_INCLUDE_DIR})
-
-add_compile_options(-O0)
-add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
-
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -ftrapv")
 
 include_directories(${PROJECT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include)
 
