@@ -1,3 +1,7 @@
+build*/
+Win32/
+x64/
+
 *.o
 *.a
 *.gcda
@@ -11,7 +15,6 @@ test-reports
 test-results
 lcov_html
 analysis_html
-build*/
 
 CMakeCache.txt
 CMakeFiles

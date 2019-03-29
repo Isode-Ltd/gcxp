@@ -34,7 +34,7 @@ public:
     }
 
     template <typename Handler>
-    void asyncWrite(size_t version, Handler handler) {
+    void asyncWrite(Version version, Handler handler) {
         outboundFrame_.clear();
         outboundMessage_.clear();
         if (version != gcxpVersion) throw Exception("internal version mismatch");
@@ -106,7 +106,7 @@ public:
             inboundMessage_.resize(0);
             auto pos = std::begin(inboundFrame_);
             auto end = std::end(inboundFrame_);
-            size_t msgLen;
+            std::size_t msgLen;
             auto len = Codec::decodeFrame(pos, end, msgLen, Codec::flags);
             auto leftover = inboundFrame_.size() - len;
             assert(leftover == static_cast<decltype(leftover)>(std::distance(pos, end)));

@@ -6,7 +6,7 @@
 #include <string>
 
 namespace Gcxp {
-using Version = size_t;
+using Version = std::uint_fast64_t;
 constexpr Version gcxpVersion = 0;
 
 template <typename Type>
@@ -17,16 +17,16 @@ void checkVersion(Type v) {
 namespace Codec {
 constexpr CborLite::Flags flags = CborLite::Flag::requireMinimalEncoding;
 
-constexpr size_t preambleReadAmount = 4;
+constexpr std::size_t preambleReadAmount = 4;
 
 template <typename Buffer, typename Type>
-typename std::enable_if<std::is_class<Buffer>::value, size_t>::type encodeVersion(Buffer& buffer, Type t) {
+typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type encodeVersion(Buffer& buffer, Type t) {
     return CborLite::encodeTagAndValue(buffer, CborLite::Major::semantic, CborLite::Minor::selfDescribeCbor) +
         CborLite::encodeUnsigned(buffer, t);
 }
 
 template <typename InputIterator, typename Type>
-typename std::enable_if<std::is_class<InputIterator>::value, size_t>::type decodeVersion(
+typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type decodeVersion(
     InputIterator& pos, InputIterator end, Type& t, CborLite::Flags flags = CborLite::Flag::none) {
     CborLite::Tag tag;
     CborLite::Tag value;
@@ -40,19 +40,19 @@ typename std::enable_if<std::is_class<InputIterator>::value, size_t>::type decod
 constexpr auto frameReadAmount = 7;
 
 template <typename Buffer, typename Type>
-typename std::enable_if<std::is_class<Buffer>::value, size_t>::type encodeFrame(Buffer& buffer, Type t) {
+typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type encodeFrame(Buffer& buffer, Type t) {
     return CborLite::encodeEncodedBytesPrefix(buffer, t);
 }
 
 template <typename InputIterator, typename Type>
-typename std::enable_if<std::is_class<InputIterator>::value, size_t>::type decodeFrame(
+typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type decodeFrame(
     InputIterator& pos, InputIterator end, Type& t, CborLite::Flags flags = CborLite::Flag::none) {
     return CborLite::decodeEncodedBytesPrefix(pos, end, t, flags);
 }
 
 template <typename Buffer>
-static typename std::enable_if<std::is_class<Buffer>::value, size_t>::type encodeMessage(Buffer& buffer, const Message& m) {
-    size_t len = 0;
+static typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type encodeMessage(Buffer& buffer, const Message& m) {
+    std::size_t len = 0;
     switch (m.type) {
     case Message::Type::request:
         len = CborLite::encodeArraySize(buffer, m.payload.empty() ? 2ul : 3ul);
@@ -79,10 +79,10 @@ static typename std::enable_if<std::is_class<Buffer>::value, size_t>::type encod
 }
 
 template <typename InputIterator>
-typename std::enable_if<std::is_class<InputIterator>::value, size_t>::type decodeMessage(
+typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type decodeMessage(
     InputIterator& pos, InputIterator end, Message& m, CborLite::Flags flags = CborLite::Flag::none) {
-    size_t nItems = 0u;
-    size_t len = CborLite::decodeArraySize(pos, end, nItems, flags);
+    std::size_t nItems = 0u;
+    std::size_t len = CborLite::decodeArraySize(pos, end, nItems, flags);
     if (nItems < 2) throw CborLite::Exception("too few items");
     unsigned long type;
 
