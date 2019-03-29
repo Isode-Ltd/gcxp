@@ -24,7 +24,7 @@ The primary source repository is hosted at
 checked out using
 
 ```
-git clone https://isode@bitbucket.org/isode/gcxp.git
+git clone https://bitbucket.org/isode/gcxp.git
 ```
 
 'master' is the main development branch. New features, as well as
@@ -45,5 +45,7 @@ git format-patch branch
 
 where branch is the appropriate upstream branch (see Branch Flow
 discussion above). Then attach the patch to a new [issue
-report](https://bitbucket.org/gcxp/cbor-lite/issues).
+report](https://bitbucket.org/isode/gcxp/issues).
+
+Alternatively, submit a pull request.
 

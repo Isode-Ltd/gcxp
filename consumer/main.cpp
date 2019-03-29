@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
         tls.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
 
         tls.load_verify_file("./consumer/trust.pem");
-        tls.set_password_callback([](size_t, boost::asio::ssl::context::password_purpose) { return "secret"; });
+        tls.set_password_callback([](std::size_t, boost::asio::ssl::context::password_purpose) { return "secret"; });
         tls.use_certificate_chain_file("./consumer/identity.pem");
         tls.use_private_key_file("./consumer/identity.pem", boost::asio::ssl::context::pem);
         tls.use_tmp_dh_file("consumer/dh2048.pem");

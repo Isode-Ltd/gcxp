@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
         boost::asio::ssl::context tls(boost::asio::ssl::context::tlsv12_client);
         tls.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
         tls.load_verify_file("./producer/trust.pem");
-        tls.set_password_callback([](size_t, boost::asio::ssl::context::password_purpose) { return std::string("secret"); });
+        tls.set_password_callback([](std::size_t, boost::asio::ssl::context::password_purpose) { return std::string("secret"); });
         tls.use_certificate_chain_file("./producer/identity.pem");
         tls.use_private_key_file("./producer/identity.pem", boost::asio::ssl::context::pem);
         tls.use_tmp_dh_file("./producer/dh2048.pem");

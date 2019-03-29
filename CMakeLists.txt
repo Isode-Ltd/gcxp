@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.9.5 FATAL_ERROR)
-project (guard)
+project (gcxp)
 
 if(POLICY CMP0076)
   cmake_policy(SET CMP0076 OLD)
@@ -8,11 +8,25 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+message(STATUS "C++ compiler is ${CMAKE_CXX_COMPILER_ID}")
+
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(WARNING "Not a 64-bit system! YMMV")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
 find_package(Git REQUIRED)
+
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(-O0)
+    add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        add_compile_options(-Wno-implicit-fallthrough)
+    endif()
+endif()
 
 find_path(CBOR_LITE_INCLUDE_DIR cbor-lite)
 if ((NOT CBOR_LITE_INCLUDE_DIR) OR (NOT EXISTS ${CBOR_LITE_INCLUDE_DIR}))
@@ -24,12 +38,10 @@ if ((NOT CBOR_LITE_INCLUDE_DIR) OR (NOT EXISTS ${CBOR_LITE_INCLUDE_DIR}))
 endif()
 include_directories(${CBOR_LITE_INCLUDE_DIR})
 
-add_compile_options(-O0)
-add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
-
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -ftrapv")
-
 include_directories(${PROJECT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include)
+
+add_library(gcxp INTERFACE)
+target_include_directories(gcxp INTERFACE include/)
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework thread system)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
@@ -40,19 +52,20 @@ if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 endif()
 link_libraries(${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
  
-find_package(OpenSSL REQUIRED)
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
-link_libraries(${OPENSSL_LIBRARIES})
+find_package(OpenSSL)
+if(OPENSSL_FOUND)
+    include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+    link_libraries(${OPENSSL_LIBRARIES})
+endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads)
 link_libraries(Threads::Threads)
 
-add_library(gcxp INTERFACE)
-target_include_directories(gcxp INTERFACE include/)
-
-add_subdirectory(consumer)
-add_subdirectory(producer)
+if(OPENSSL_FOUND)
+    add_subdirectory(consumer)
+    add_subdirectory(producer)
+endif()
 
 add_custom_target(unit-test COMMAND ./unit/unit --log_level=warning)
 add_custom_target(junit COMMAND mkdir -p test-results && ./unit/unit --logger=JUNIT,warning,test-results/results.xml)
