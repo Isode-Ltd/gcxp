@@ -26,7 +26,7 @@ typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type encodeV
 }
 
 template <typename InputIterator, typename Type>
-typename std::enable_if<std::is_class<InputIterator>::value, size_t>::type decodeVersion(
+typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type decodeVersion(
     InputIterator& pos, InputIterator end, Type& t, CborLite::Flags flags = CborLite::Flag::none) {
     CborLite::Tag tag;
     CborLite::Tag value;
