@@ -20,9 +20,6 @@ endif()
 
 find_package(Git REQUIRED)
 
-add_compile_options(-O0)
-add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
-
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_compile_options(-O0)
     add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
@@ -43,6 +40,9 @@ include_directories(${CBOR_LITE_INCLUDE_DIR})
 
 include_directories(${PROJECT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include)
 
+add_library(gcxp INTERFACE)
+target_include_directories(gcxp INTERFACE include/)
+
 find_package(Boost REQUIRED COMPONENTS unit_test_framework thread system)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_LOG_DYN_LINK)
@@ -52,19 +52,20 @@ if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 endif()
 link_libraries(${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
  
-find_package(OpenSSL REQUIRED)
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
-link_libraries(${OPENSSL_LIBRARIES})
+find_package(OpenSSL)
+if(OPENSSL_FOUND)
+    include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+    link_libraries(${OPENSSL_LIBRARIES})
+endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads)
 link_libraries(Threads::Threads)
 
-add_library(gcxp INTERFACE)
-target_include_directories(gcxp INTERFACE include/)
-
-add_subdirectory(consumer)
-add_subdirectory(producer)
+if(OPENSSL_FOUND)
+    add_subdirectory(consumer)
+    add_subdirectory(producer)
+endif()
 
 add_custom_target(unit-test COMMAND ./unit/unit --log_level=warning)
 add_custom_target(junit COMMAND mkdir -p test-results && ./unit/unit --logger=JUNIT,warning,test-results/results.xml)
