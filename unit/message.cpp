@@ -62,7 +62,6 @@ BOOST_AUTO_TEST_CASE(basic) {
 
 BOOST_AUTO_TEST_CASE(initialization) {
     Gcxp::Message m;
-
     BOOST_CHECK_EQUAL(m.id.size(), 0u);
     BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::invalid);
     BOOST_CHECK_EQUAL(m.accepted, false);

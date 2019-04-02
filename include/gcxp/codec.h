@@ -21,8 +21,8 @@ constexpr std::size_t preambleReadAmount = 4;
 
 template <typename Buffer, typename Type>
 typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type encodeVersion(Buffer& buffer, Type t) {
-    return CborLite::encodeTagAndValue(buffer, CborLite::Major::semantic, CborLite::Minor::selfDescribeCbor) +
-        CborLite::encodeUnsigned(buffer, t);
+    auto len = CborLite::encodeTagAndValue(buffer, CborLite::Major::semantic, CborLite::Minor::selfDescribeCbor);
+    return len + CborLite::encodeUnsigned(buffer, t);
 }
 
 template <typename InputIterator, typename Type>
