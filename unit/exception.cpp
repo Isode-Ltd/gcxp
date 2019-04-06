@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(basic) {
 }
 
 BOOST_AUTO_TEST_CASE(inheritance) {
-    // Gcxp::Exception (should) inherit from std::exception
+    // Gcxp::Exception inherits from std::exception
     BOOST_CHECK_NO_THROW(try { throw Gcxp::Exception(); } catch (
         const std::exception& e) { BOOST_CHECK_EQUAL(e.what(), std::string("GCXP Exception")); });
 
