@@ -26,10 +26,14 @@ BOOST_AUTO_TEST_CASE(basic) {
 }
 
 BOOST_AUTO_TEST_CASE(inheritance) {
-    // Gcxp::Exception doesn't (publicly) inherit from std::exception
-    BOOST_CHECK_THROW(try { throw Gcxp::Exception(); } catch (const std::exception&){}, Gcxp::Exception);
-    // nor from CborLite::Exception
+    // Gcxp::Exception (should) inherit from std::exception
+    BOOST_CHECK_NO_THROW(try { throw Gcxp::Exception(); } catch (
+        const std::exception& e) { BOOST_CHECK_EQUAL(e.what(), std::string("GCXP Exception")); });
+
+    // Gcxp::Exception doesn't inherit from CborLite::Exception
     BOOST_CHECK_THROW(try { throw Gcxp::Exception(); } catch (const CborLite::Exception&){}, Gcxp::Exception);
+    // and CborLite::Exception doesn't inherit from Guard::Exception
+    BOOST_CHECK_THROW(try { throw CborLite::Exception(); } catch (const Gcxp::Exception&){}, CborLite::Exception);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
