@@ -67,9 +67,6 @@ if(OPENSSL_FOUND)
     add_subdirectory(producer)
 endif()
 
-add_custom_target(unit-test COMMAND ./unit/unit --log_level=warning)
-add_custom_target(junit COMMAND mkdir -p test-results && ./unit/unit --logger=JUNIT,warning,test-results/results.xml)
-
 add_subdirectory(unit)
 
 add_custom_target(reformat
