@@ -5,7 +5,7 @@
 namespace Gcxp {
 
 // This class represents an exception thrown by the GCXP API.
-class Exception : std::exception {
+class Exception : public std::exception {
 public:
     Exception() noexcept {
     }
