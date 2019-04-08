@@ -110,7 +110,7 @@ public:
             auto len = Codec::decodeFrame(pos, end, msgLen, Codec::flags);
             auto leftover = inboundFrame_.size() - len;
             assert(leftover == static_cast<decltype(leftover)>(std::distance(pos, end)));
-            if (leftover > msgLen) throw "Undersized message";
+            if (leftover > msgLen) throw Exception("Undersized message");
             if (leftover) inboundMessage_.insert(std::begin(inboundMessage_), pos, end);
             inboundMessage_.resize(msgLen);
             if (leftover == msgLen) return handleReadMessage(e, t, handler);
