@@ -5,7 +5,6 @@
 #include <vector>
 
 namespace Gcxp {
-// Content Exchange Protocol Message
 class Message {
 public:
     using Id = std::vector<unsigned char>;
@@ -43,10 +42,15 @@ public:
     }
 
     inline static std::string payloadToString(const Gcxp::Message::Payload& payload) {
-        std::ostringstream ss;
-        ss << std::setw(2) << std::setfill('0') << std::hex;
-        std::copy(payload.begin(), payload.end(), std::ostream_iterator<unsigned int>(ss));
-        return ss.str();
+        const std::string hex = "0123456789abcdef";
+        if (payload.empty()) return "";
+
+        std::string s;
+        for (unsigned ch : payload) {
+            s += hex[(ch >> 4) & 0x0Fu];
+            s += hex[ch & 0x0Fu];
+        }
+        return s;
     }
 
     bool operator==(const Message& other) const {

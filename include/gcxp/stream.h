@@ -9,10 +9,7 @@
 #include <vector>
 
 namespace Gcxp {
-
-// Content Exchange Protocol Stream
 using Buffer = std::vector<char>;
-
 class Stream {
 public:
     Stream(boost::asio::io_service& io_service, boost::asio::ssl::context& tls) : socket_(io_service, tls) {
@@ -152,5 +149,4 @@ private:
     Buffer outboundMessage_;
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
 };
-
 } // namespace Gcxp
