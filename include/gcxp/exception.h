@@ -37,5 +37,4 @@ public:
 private:
     std::string what_ = "GCXP Exception";
 };
-
 } // namespace Gcxp
