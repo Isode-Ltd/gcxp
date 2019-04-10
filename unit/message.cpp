@@ -5,7 +5,7 @@
 BOOST_AUTO_TEST_SUITE(gcxp)
 BOOST_AUTO_TEST_SUITE(message)
 
-BOOST_AUTO_TEST_CASE(basic) {
+BOOST_AUTO_TEST_CASE(idToString) {
     Gcxp::Message::Id id;
     BOOST_CHECK_EQUAL(Gcxp::Message::idToString(id), "<EMPTY>");
     id.push_back(0);
@@ -42,7 +42,45 @@ BOOST_AUTO_TEST_CASE(basic) {
     BOOST_CHECK_EQUAL(Gcxp::Message::idToString(id), "00010203:84050607:88090a0b:0c0d0e0f");
     id.push_back('\xff');
     BOOST_CHECK_EQUAL(Gcxp::Message::idToString(id), "00010203:84050607:88090a0b:0c0d0e0f:ff");
+}
 
+BOOST_AUTO_TEST_CASE(payloadToString) {
+    {
+        const std::string content;
+        const Gcxp::Message::Payload payload;
+        BOOST_CHECK_EQUAL(Gcxp::Message::payloadToString(payload), "");
+    }
+    {
+        const std::string content = "<content/>";
+        const Gcxp::Message::Payload payload(std::begin(content), std::end(content));
+        const auto got = Gcxp::Message::payloadToString(payload);
+        BOOST_CHECK_EQUAL(got.length(), content.length()*2);
+        BOOST_CHECK_EQUAL(got, "3c636f6e74656e742f3e");
+    }
+    {
+        const std::string content("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", 16);
+        const Gcxp::Message::Payload payload(std::begin(content), std::end(content));
+        const auto got = Gcxp::Message::payloadToString(payload);
+        BOOST_CHECK_EQUAL(got.length(), content.length()*2);
+        BOOST_CHECK_EQUAL(got, "000102030405060708090a0b0c0d0e0f");
+    }
+    {
+        const std::string content("\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff", 16);
+        const Gcxp::Message::Payload payload(std::begin(content), std::end(content));
+        const auto got = Gcxp::Message::payloadToString(payload);
+        BOOST_CHECK_EQUAL(got.length(), content.length()*2);
+        BOOST_CHECK_EQUAL(got, "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
+    }
+    {
+        const std::string content("\x00\x10\x20\x30\x40\x50\x60\x70\x80\x90\xa0\xb0\xc0\xd0\xe0\xf0", 16);
+        const Gcxp::Message::Payload payload(std::begin(content), std::end(content));
+        const auto got = Gcxp::Message::payloadToString(payload);
+        BOOST_CHECK_EQUAL(got.length(), content.length()*2);
+        BOOST_CHECK_EQUAL(got, "00102030405060708090a0b0c0d0e0f0");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(type) {
     std::ostringstream out;
     out << Gcxp::Message::Type::invalid;
     BOOST_CHECK_EQUAL(out.str(), "Invalid");
