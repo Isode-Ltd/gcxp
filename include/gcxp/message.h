@@ -31,6 +31,8 @@ public:
         if (id.empty()) return "<EMPTY>";
 
         std::string s;
+        // reserving floor(id.size()*2.25+1) would be sufficient but id.size()*3 avoids floating-point math
+        s.reserve(id.size()*3);
         unsigned i = 0;
         for (unsigned ch : id) {
             s += hex[(ch >> 4) & 0x0Fu];
@@ -46,6 +48,7 @@ public:
         if (payload.empty()) return "";
 
         std::string s;
+        s.reserve(payload.size()*2);
         for (unsigned ch : payload) {
             s += hex[(ch >> 4) & 0x0Fu];
             s += hex[ch & 0x0Fu];
