@@ -70,6 +70,23 @@ BOOST_AUTO_TEST_CASE(codec) {
         });
         BOOST_CHECK_NO_THROW({
             std::vector<char> buffer;
+            auto len = Gcxp::Codec::encodeFrame(buffer, expect.size());
+            auto prefix = std::get<2>(test);
+            BOOST_CHECK_EQUAL(len, prefix);
+            std::string got(buffer.begin(), buffer.end());
+            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefix));
+        });
+        BOOST_CHECK_NO_THROW({
+            std::size_t got = 0;
+            auto pos = std::begin(std::get<1>(test));
+            auto prefix = std::get<2>(test);
+            auto len = Gcxp::Codec::decodeFrame(pos, pos + prefix, got);
+            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefix);
+            BOOST_CHECK_EQUAL(len, prefix);
+            BOOST_CHECK_EQUAL(got, expect.size());
+        });
+        BOOST_CHECK_NO_THROW({
+            std::vector<char> buffer;
             auto len = CborLite::encodeEncodedBytes(buffer, expect);
             BOOST_CHECK_EQUAL(len, std::get<1>(test).size());
             std::string got(buffer.begin(), buffer.end());
@@ -82,23 +99,6 @@ BOOST_AUTO_TEST_CASE(codec) {
             BOOST_CHECK(pos == std::end(std::get<1>(test)));
             BOOST_CHECK_EQUAL(len, std::get<1>(test).size());
             BOOST_CHECK_EQUAL(got, expect);
-        });
-        BOOST_CHECK_NO_THROW({
-            std::vector<char> buffer;
-            auto len = CborLite::encodeEncodedBytesPrefix(buffer, expect.size());
-            auto prefix = std::get<2>(test);
-            BOOST_CHECK_EQUAL(len, prefix);
-            std::string got(buffer.begin(), buffer.end());
-            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefix));
-        });
-        BOOST_CHECK_NO_THROW({
-            std::size_t got = 0;
-            auto pos = std::begin(std::get<1>(test));
-            auto prefix = std::get<2>(test);
-            auto len = CborLite::decodeEncodedBytesPrefix(pos, pos + prefix, got);
-            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefix);
-            BOOST_CHECK_EQUAL(len, prefix);
-            BOOST_CHECK_EQUAL(got, expect.size());
         });
     }
 }
