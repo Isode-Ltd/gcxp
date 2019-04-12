@@ -103,10 +103,11 @@ typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type 
     if (!nItems--) throw CborLite::Exception("too few items");
     len += CborLite::decodeBytes(pos, end, m.id);
     if (m.id.size() < 1 || m.id.size() > 256) throw CborLite::Exception("bad Id length");
-    if (m.id.empty()) throw CborLite::Exception("empty payload");
+    if (m.id.empty()) throw CborLite::Exception("empty id");
 
     if (!nItems) return len;
     len += CborLite::decodeText(pos, end, m.payload, flags);
+    if (m.payload.empty()) throw CborLite::Exception("empty payload");
     if (--nItems) throw CborLite::Exception("too many items");
     return len;
 }
