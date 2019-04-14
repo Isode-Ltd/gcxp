@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(preamble) {
 }
 
 BOOST_AUTO_TEST_CASE(codec) {
-    std::vector<std::tuple<Gcxp::Message, std::string, int>> cases{
+    const std::vector<const std::tuple<const Gcxp::Message, const std::string, int>> cases{
         {{Gcxp::Message::Type::request, false, {'@', '@', '@', '@'}, {' '}},
             "\xd8\x18\x49"
             "\x83"
@@ -71,18 +71,18 @@ BOOST_AUTO_TEST_CASE(codec) {
         BOOST_CHECK_NO_THROW({
             std::vector<char> buffer;
             auto len = Gcxp::Codec::encodeFrame(buffer, expect.size());
-            auto prefix = std::get<2>(test);
-            BOOST_CHECK_EQUAL(len, prefix);
+            auto prefixLen = std::get<2>(test);
+            BOOST_CHECK_EQUAL(len, prefixLen);
             std::string got(buffer.begin(), buffer.end());
-            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefix));
+            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefixLen));
         });
         BOOST_CHECK_NO_THROW({
             std::size_t got = 0;
             auto pos = std::begin(std::get<1>(test));
-            auto prefix = std::get<2>(test);
-            auto len = Gcxp::Codec::decodeFrame(pos, pos + prefix, got);
-            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefix);
-            BOOST_CHECK_EQUAL(len, prefix);
+            auto prefixLen = std::get<2>(test);
+            auto len = Gcxp::Codec::decodeFrame(pos, pos + prefixLen, got);
+            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefixLen);
+            BOOST_CHECK_EQUAL(len, prefixLen);
             BOOST_CHECK_EQUAL(got, expect.size());
         });
         BOOST_CHECK_NO_THROW({
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(codec) {
 }
 
 BOOST_AUTO_TEST_CASE(invalidMessage) {
-    std::vector<std::pair<Gcxp::Message, std::string>> cases{
+    const std::vector<const std::pair<const Gcxp::Message, const std::string>> cases{
         {{Gcxp::Message::Type::invalid, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
         {{Gcxp::Message::Type::notice, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
         {{Gcxp::Message::Type::request, true, {'@', '@', '@', '@'}, {' '}},
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(invalidMessage) {
 }
 
 BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
-    std::vector<std::pair<std::string, std::string>> cases{
+    const std::vector<const std::pair<const std::string, const std::string>> cases{
         {"\x81\x01", "GCXP Exception: array size too small"},
         {"\x85\x02", "GCXP Exception: array size too large"},
         {"\x83", "CBOR Exception: not enough input"},
@@ -163,6 +163,31 @@ BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
                 Gcxp::Message msg;
                 auto pos = std::begin(test.first);
                 (void)Gcxp::Codec::decodeMessage(pos, std::end(test.first), msg);
+            },
+            std::exception,
+            [&](std::exception const& e) {
+                BOOST_CHECK_EQUAL(e.what(), test.second);
+                return e.what() == test.second;
+            });
+    }
+}
+
+BOOST_AUTO_TEST_CASE(invalidFrameEncoding) {
+    const std::vector<const std::pair<const std::string, const std::string>> cases{
+        {"\x49\x83\x02\x44\x40\x40\x40\x40\x61\x20", "CBOR Exception: Not a CBOR Encoded Data"},
+        {"\xd8\x19", "CBOR Exception: Not a CBOR Encoded Data"},
+        {"\xd8\x18\x80", "CBOR Exception: Not Bytes"},
+        {"\xd8", "CBOR Exception: not enough input"},
+        {"\xd8\x18", "CBOR Exception: not enough input"},
+        {"\xd8\x18\x58", "CBOR Exception: not enough input"},
+    };
+
+    for (const auto& test : cases) {
+        BOOST_CHECK_EXCEPTION(
+            {
+                std::size_t got = 0;
+                auto pos = std::begin(test.first);
+                (void)Gcxp::Codec::decodeFrame(pos, std::end(test.first), got);
             },
             std::exception,
             [&](std::exception const& e) {
