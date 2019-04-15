@@ -1,4 +1,4 @@
 [submodule "external/cbor-lite"]
 	path = external/cbor-lite
 	url = https://bitbucket.org/isode/cbor-lite.git
-	branch = production
+	branch = feature/issue12-misc
