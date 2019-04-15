@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(type) {
     BOOST_CHECK_EQUAL(out.str(), "Unknown(-1)");
 }
 
-BOOST_AUTO_TEST_CASE(message) {
+BOOST_AUTO_TEST_CASE(initList) {
     {
         Gcxp::Message m{Gcxp::Message::Type::notice, false, {}, {}};
         BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::notice);
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(message) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(messageOperatorOut) {
+BOOST_AUTO_TEST_CASE(operatorOut) {
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
         std::ostringstream out;
