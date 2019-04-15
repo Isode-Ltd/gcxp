@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(preamble) {
 }
 
 BOOST_AUTO_TEST_CASE(codec) {
-    const std::vector<const std::tuple<const Gcxp::Message, const std::string, int>> cases{
+    const std::vector<std::tuple<const Gcxp::Message, const std::string, int>> cases{
         {{Gcxp::Message::Type::request, false, {'@', '@', '@', '@'}, {' '}},
             "\xd8\x18\x49"
             "\x83"
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(codec) {
 }
 
 BOOST_AUTO_TEST_CASE(invalidMessage) {
-    const std::vector<const std::pair<const Gcxp::Message, const std::string>> cases{
+    const std::vector<std::pair<const Gcxp::Message, const std::string>> cases{
         {{Gcxp::Message::Type::invalid, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
         {{Gcxp::Message::Type::notice, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
         {{Gcxp::Message::Type::request, true, {'@', '@', '@', '@'}, {' '}},
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(invalidMessage) {
 }
 
 BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
-    const std::vector<const std::pair<const std::string, const std::string>> cases{
+    const std::vector<std::pair<const std::string, const std::string>> cases{
         {"\x81\x01", "GCXP Exception: array size too small"},
         {"\x85\x02", "GCXP Exception: array size too large"},
         {"\x83", "CBOR Exception: not enough input"},
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
 }
 
 BOOST_AUTO_TEST_CASE(invalidFrameEncoding) {
-    const std::vector<const std::pair<const std::string, const std::string>> cases{
+    const std::vector<std::pair<const std::string, const std::string>> cases{
         {"\x49\x83\x02\x44\x40\x40\x40\x40\x61\x20", "CBOR Exception: not CBOR Encoded Data"},
         {"\xd8\x19", "CBOR Exception: not CBOR Encoded Data"},
         {"\xd8\x18\x80", "CBOR Exception: not ByteString"},
