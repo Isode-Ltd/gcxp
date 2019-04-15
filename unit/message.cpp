@@ -100,6 +100,19 @@ BOOST_AUTO_TEST_CASE(type) {
 }
 
 BOOST_AUTO_TEST_CASE(message) {
+    {
+        Gcxp::Message m{Gcxp::Message::Type::notice, false, {}, {}};
+        BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::notice);
+        BOOST_CHECK_EQUAL(m.accepted, false);
+        BOOST_CHECK(m.id.empty());
+        BOOST_CHECK(m.payload.empty());
+        std::ostringstream out;
+        out << m;
+        BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(messageOperatorOut) {
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
         std::ostringstream out;
