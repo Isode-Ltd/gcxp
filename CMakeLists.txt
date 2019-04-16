@@ -20,7 +20,9 @@ endif()
 
 find_package(Git REQUIRED)
 
-if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(/Od)
+else()
     add_compile_options(-O0)
     add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
