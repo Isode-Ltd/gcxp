@@ -7,11 +7,9 @@ list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/main.cpp")
 add_executable(unit main.cpp codec.cpp exception.cpp message.cpp ${CBOR_UNIT_SOURCES})
 if(OPENSSL_FOUND)
     target_sources(unit PRIVATE stream.cpp)
-else()
-    message(WARNING "Skipping test cases in stream.cpp, no OpenSSL found")
 endif()
 target_compile_definitions(unit PRIVATE "BOOST_TEST_DYN_LINK=1")
-target_link_libraries(unit PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+target_link_libraries(unit PRIVATE Boost::unit_test_framework)
 
 add_custom_target(unit-tests
     COMMENT Unit Tests
