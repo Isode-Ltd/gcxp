@@ -1,4 +1,8 @@
 #pragma once
+// This file is part of GCXP which is copyright Isode Limited
+// and others and released under a MIT license. For details, see the
+// COPYRIGHT.md file in the top-level folder of the GCXP software
+// distribution.
 #include <iomanip>
 #include <iterator>
 #include <sstream>
@@ -18,8 +22,7 @@ public:
 
     template <typename Type>
     static typename std::enable_if<std::is_arithmetic<Type>::value, Id>::type constructId(Type t) {
-        Id id;
-        id.resize(sizeof t);
+        Id id(sizeof t);
         for (auto i = sizeof t; i; t >>= 8) {
             id[--i] = t & 0xFFu;
         }
@@ -89,14 +92,15 @@ inline std::ostream& operator<<(std::ostream& out, Message::Type type) {
 inline std::ostream& operator<<(std::ostream& out, const Message& m) {
     switch (m.type) {
     case Message::Type::request:
-        out << "REQ ";
+        out << "REQ";
+        if (m.accepted) out << " A:T";
         break;
     case Message::Type::response:
-        out << "RSP ";
-        out << " A:" << std::string(m.accepted ? "T" : "F");
+        out << "RSP A:" << std::string(m.accepted ? "T" : "F");
         break;
     default:
-        out << "INV ";
+        out << "INV";
+        if (m.accepted) out << " A:T";
     }
     out << " I:" << Message::idToString(m.id);
     if (!m.payload.empty()) out << " P:" << Message::payloadToString(m.payload);

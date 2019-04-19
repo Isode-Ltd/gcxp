@@ -1,4 +1,7 @@
-// Gcxp::Message misc test cases
+// This file is part of GCXP which is copyright Isode Limited
+// and others and released under a MIT license. For details, see the
+// COPYRIGHT.md file in the top-level folder of the GCXP software
+// distribution.
 #include <gcxp/message.h>
 #include <boost/test/unit_test.hpp>
 #include <cstdint>
@@ -105,6 +108,9 @@ BOOST_AUTO_TEST_CASE(initialization) {
     BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::invalid);
     BOOST_CHECK_EQUAL(m.accepted, false);
     BOOST_CHECK_EQUAL(m.payload.size(), 0u);
+    std::ostringstream out;
+    out << m;
+    BOOST_CHECK_EQUAL(out.str(), "INV I:<EMPTY>");
 }
 
 BOOST_AUTO_TEST_CASE(initList) {
@@ -115,7 +121,7 @@ BOOST_AUTO_TEST_CASE(initList) {
     BOOST_CHECK(m.payload.empty());
     std::ostringstream out;
     out << m;
-    BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+    BOOST_CHECK_EQUAL(out.str(), "INV I:<EMPTY>");
 }
 
 BOOST_AUTO_TEST_CASE(initListWithEquals) {
@@ -126,7 +132,7 @@ BOOST_AUTO_TEST_CASE(initListWithEquals) {
     BOOST_CHECK(m.payload.empty());
     std::ostringstream out;
     out << m;
-    BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+    BOOST_CHECK_EQUAL(out.str(), "INV I:<EMPTY>");
 }
 
 BOOST_AUTO_TEST_CASE(operatorOut) {
@@ -134,7 +140,7 @@ BOOST_AUTO_TEST_CASE(operatorOut) {
         Gcxp::Message m;
         std::ostringstream out;
         out << m;
-        BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+        BOOST_CHECK_EQUAL(out.str(), "INV I:<EMPTY>");
     });
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
@@ -145,7 +151,7 @@ BOOST_AUTO_TEST_CASE(operatorOut) {
         m.payload.assign(std::begin(content), std::end(content));
         std::ostringstream out;
         out << m;
-        BOOST_CHECK_EQUAL(out.str(), "INV  I:ffff P:3c646f632f3e");
+        BOOST_CHECK_EQUAL(out.str(), "INV A:T I:ffff P:3c646f632f3e");
     });
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
@@ -155,7 +161,7 @@ BOOST_AUTO_TEST_CASE(operatorOut) {
         m.payload.assign(std::begin(content), std::end(content));
         std::ostringstream out;
         out << m;
-        BOOST_CHECK_EQUAL(out.str(), "REQ  I:0001 P:3c646f632f3e");
+        BOOST_CHECK_EQUAL(out.str(), "REQ I:0001 P:3c646f632f3e");
     });
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
@@ -164,7 +170,7 @@ BOOST_AUTO_TEST_CASE(operatorOut) {
         m.accepted = true;
         std::ostringstream out;
         out << m;
-        BOOST_CHECK_EQUAL(out.str(), "RSP  A:T I:00000002");
+        BOOST_CHECK_EQUAL(out.str(), "RSP A:T I:00000002");
     });
 }
 

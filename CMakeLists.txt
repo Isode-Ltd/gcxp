@@ -75,7 +75,7 @@ if(NOT OPENSSL_FOUND)
     find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+include_directories(SYSTEM Boost::boost)
 
 if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     add_subdirectory(unit)

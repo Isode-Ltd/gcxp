@@ -1,4 +1,7 @@
-// GCXP Codec Test Cases
+// This file is part of GCXP which is copyright Isode Limited
+// and others and released under a MIT license. For details, see the
+// COPYRIGHT.md file in the top-level folder of the GCXP software
+// distribution.
 #include <gcxp/codec.h>
 #include <gcxp/message.h>
 #include <boost/test/unit_test.hpp>
