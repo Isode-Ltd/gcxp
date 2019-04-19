@@ -22,20 +22,6 @@ include [LLVM](https://llvm.org) (for clang++ and clang-format),
   * [producer](./producer) - producer example program
   * [unit](./unit) - unit tests
 
-To use the headers, just add the include folder to your include search path.
-
-To build the test code, follow these steps
-
-```
-mkdir build
-cd build
-cmake -G Ninja ..
-ninja
-ninja unit-test
-```
-
-This also builds the example programs.
-
 More information about GCXP is available at
 [https://bitbucket.org/isode/gcxp/wiki/Home](https://bitbucket.org/isode/gcxp/wiki/Home).
 

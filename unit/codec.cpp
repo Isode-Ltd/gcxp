@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(preamble) {
 }
 
 BOOST_AUTO_TEST_CASE(codec) {
-    std::vector<std::tuple<Gcxp::Message, std::string, int>> cases{
+    const std::vector<std::tuple<const Gcxp::Message, const std::string, int>> cases{
         {{Gcxp::Message::Type::request, false, {'@', '@', '@', '@'}, {' '}},
             "\xd8\x18\x49"
             "\x83"
@@ -71,18 +71,18 @@ BOOST_AUTO_TEST_CASE(codec) {
         BOOST_CHECK_NO_THROW({
             std::vector<char> buffer;
             auto len = Gcxp::Codec::encodeFrame(buffer, expect.size());
-            auto prefix = std::get<2>(test);
-            BOOST_CHECK_EQUAL(len, prefix);
+            auto prefixLen = std::get<2>(test);
+            BOOST_CHECK_EQUAL(len, prefixLen);
             std::string got(buffer.begin(), buffer.end());
-            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefix));
+            BOOST_CHECK_EQUAL(got, std::get<1>(test).substr(0, prefixLen));
         });
         BOOST_CHECK_NO_THROW({
             std::size_t got = 0;
             auto pos = std::begin(std::get<1>(test));
-            auto prefix = std::get<2>(test);
-            auto len = Gcxp::Codec::decodeFrame(pos, pos + prefix, got);
-            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefix);
-            BOOST_CHECK_EQUAL(len, prefix);
+            auto prefixLen = std::get<2>(test);
+            auto len = Gcxp::Codec::decodeFrame(pos, pos + prefixLen, got);
+            BOOST_CHECK_EQUAL(std::distance(std::begin(std::get<1>(test)), pos), prefixLen);
+            BOOST_CHECK_EQUAL(len, prefixLen);
             BOOST_CHECK_EQUAL(got, expect.size());
         });
         BOOST_CHECK_NO_THROW({
@@ -100,6 +100,100 @@ BOOST_AUTO_TEST_CASE(codec) {
             BOOST_CHECK_EQUAL(len, std::get<1>(test).size());
             BOOST_CHECK_EQUAL(got, expect);
         });
+    }
+}
+
+BOOST_AUTO_TEST_CASE(invalidMessage) {
+    const std::vector<std::pair<const Gcxp::Message, const std::string>> cases{
+        {{Gcxp::Message::Type::invalid, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
+        {{Gcxp::Message::Type::notice, false, {'@', '@', '@', '@'}, {' '}}, "GCXP Exception: bad Type"},
+        {{Gcxp::Message::Type::request, true, {'@', '@', '@', '@'}, {' '}},
+            "GCXP Exception: accepted true but type is not response"},
+        {{Gcxp::Message::Type::response, false, {}, {' '}}, "GCXP Exception: id is empty"},
+    };
+
+    for (const auto& test : cases) {
+        BOOST_CHECK_EXCEPTION(
+            {
+                std::vector<char> buffer;
+                (void)Gcxp::Codec::encodeMessage(buffer, test.first);
+            },
+            Gcxp::Exception,
+            [&](Gcxp::Exception const& e) {
+                BOOST_CHECK_EQUAL(e.what(), test.second);
+                return e.what() == test.second;
+            });
+    }
+}
+
+BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
+    const std::vector<std::pair<const std::string, const std::string>> cases{
+        {"\x81\x01", "GCXP Exception: array size too small"},
+        {"\x85\x02", "GCXP Exception: array size too large"},
+        {"\x83", "CBOR Exception: not enough input"},
+        {"\x83\x80", "CBOR Exception: not Unsigned"},
+        {"\x83\x01", "GCXP Exception: bad message type"},
+        {"\x83\x04", "GCXP Exception: bad message type"},
+        {"\x83\x02", "CBOR Exception: not enough input"},
+        {"\x83\x03", "CBOR Exception: not enough input"},
+        {"\x83\x02\xf4", "CBOR Exception: not ByteString"},
+        {"\x83\x02\xf5", "CBOR Exception: not ByteString"},
+        {"\x83\x02\x40", "GCXP Exception: bad Id length"},
+        {"\x83\x02\x41", "CBOR Exception: not enough input"},
+        {"\x83\x02\x42@", "CBOR Exception: not enough input"},
+        {"\x83\x02\x41@\x61", "CBOR Exception: not enough input"},
+        {"\x83\x02\x41@\x62 ", "CBOR Exception: not enough input"},
+        {"\x83\x02\x41@\x41 ", "CBOR Exception: not TextString"},
+        {"\x83\x02\x41@\x60", "GCXP Exception: empty payload"},
+        {"\x83\x03\x40", "CBOR Exception: not Simple"},
+        {"\x83\x03\xf3", "CBOR Exception: not Boolean"},
+        {"\x83\x03\xf6", "CBOR Exception: not Boolean"},
+        {"\x83\x03\xf4\x40", "GCXP Exception: bad Id length"},
+        {"\x83\x03\xf4\x41", "CBOR Exception: not enough input"},
+        {"\x83\x03\xf5\x42@", "CBOR Exception: not enough input"},
+        {"\x84\x03\xf4\x41@\x61", "CBOR Exception: not enough input"},
+        {"\x84\x03\xf4\x41@\x62 ", "CBOR Exception: not enough input"},
+        {"\x84\x03\xf4\x41@\x41 ", "CBOR Exception: not TextString"},
+        {"\x84\x03\xf4\x41@\x60", "GCXP Exception: empty payload"},
+    };
+
+    for (const auto& test : cases) {
+        BOOST_CHECK_EXCEPTION(
+            {
+                Gcxp::Message msg;
+                auto pos = std::begin(test.first);
+                (void)Gcxp::Codec::decodeMessage(pos, std::end(test.first), msg);
+            },
+            std::exception,
+            [&](std::exception const& e) {
+                BOOST_CHECK_EQUAL(e.what(), test.second);
+                return e.what() == test.second;
+            });
+    }
+}
+
+BOOST_AUTO_TEST_CASE(invalidFrameEncoding) {
+    const std::vector<std::pair<const std::string, const std::string>> cases{
+        {"\x49\x83\x02\x44\x40\x40\x40\x40\x61\x20", "CBOR Exception: not CBOR Encoded Data"},
+        {"\xd8\x19", "CBOR Exception: not CBOR Encoded Data"},
+        {"\xd8\x18\x80", "CBOR Exception: not ByteString"},
+        {"\xd8", "CBOR Exception: not enough input"},
+        {"\xd8\x18", "CBOR Exception: not enough input"},
+        {"\xd8\x18\x58", "CBOR Exception: not enough input"},
+    };
+
+    for (const auto& test : cases) {
+        BOOST_CHECK_EXCEPTION(
+            {
+                std::size_t got = 0;
+                auto pos = std::begin(test.first);
+                (void)Gcxp::Codec::decodeFrame(pos, std::end(test.first), got);
+            },
+            std::exception,
+            [&](std::exception const& e) {
+                BOOST_CHECK_EQUAL(e.what(), test.second);
+                return e.what() == test.second;
+            });
     }
 }
 

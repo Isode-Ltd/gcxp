@@ -61,18 +61,15 @@ static typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type 
         len = CborLite::encodeArraySize(buffer, m.payload.empty() ? 3ul : 4ul);
         break;
     default:
-        throw CborLite::Exception("bad Type");
+        throw Exception("bad Type");
     }
     len += CborLite::encodeUnsigned(buffer, static_cast<unsigned long>(m.type));
-    switch (m.type) {
-    case Message::Type::request:
-        break;
-    case Message::Type::response:
+    if (m.type == Message::Type::response) {
         len += CborLite::encodeBool(buffer, m.accepted);
-        break;
-    default:
-        throw CborLite::Exception("bad Type");
+    } else if (m.accepted) {
+        throw Exception("accepted true but type is not response");
     }
+    if (m.id.empty()) throw Exception("id is empty");
     len += CborLite::encodeBytes(buffer, m.id);
     if (!m.payload.empty()) len += CborLite::encodeText(buffer, m.payload);
     return len;
@@ -83,32 +80,37 @@ typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type 
     InputIterator& pos, InputIterator end, Message& m, CborLite::Flags flags = CborLite::Flag::none) {
     std::size_t nItems = 0u;
     std::size_t len = CborLite::decodeArraySize(pos, end, nItems, flags);
-    if (nItems < 2) throw CborLite::Exception("too few items");
+    if (nItems < 2) throw Exception("array size too small");
+    if (nItems > 4) throw Exception("array size too large");
     unsigned long type;
 
     len += CborLite::decodeUnsigned(pos, end, type, flags);
-    m.type = static_cast<Message::Type>(type);
     nItems--;
-
+    m.type = static_cast<Message::Type>(type);
     switch (m.type) {
     case Message::Type::request:
+    case Message::Type::response:
         break;
+    default:
+        throw Exception("bad message type");
+    }
+
+    switch (m.type) {
     case Message::Type::response:
         len += CborLite::decodeBool(pos, end, m.accepted, flags);
         nItems--;
         break;
-    default:
-        throw CborLite::Exception("bad Type");
+    default:;
     }
-    if (!nItems--) throw CborLite::Exception("too few items");
+    if (!nItems--) throw Exception("too few items");
     len += CborLite::decodeBytes(pos, end, m.id);
-    if (m.id.size() < 1 || m.id.size() > 256) throw CborLite::Exception("bad Id length");
-    if (m.id.empty()) throw CborLite::Exception("empty id");
+    if (m.id.size() < 1 || m.id.size() > 256) throw Exception("bad Id length");
+    if (m.id.empty()) throw Exception("empty id");
 
     if (!nItems) return len;
     len += CborLite::decodeText(pos, end, m.payload, flags);
-    if (m.payload.empty()) throw CborLite::Exception("empty payload");
-    if (--nItems) throw CborLite::Exception("too many items");
+    if (m.payload.empty()) throw Exception("empty payload");
+    if (--nItems) throw Exception("too many items");
     return len;
 }
 } // namespace Codec

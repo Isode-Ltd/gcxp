@@ -99,7 +99,37 @@ BOOST_AUTO_TEST_CASE(type) {
     BOOST_CHECK_EQUAL(out.str(), "Unknown(-1)");
 }
 
-BOOST_AUTO_TEST_CASE(message) {
+BOOST_AUTO_TEST_CASE(initialization) {
+    Gcxp::Message m;
+    BOOST_CHECK_EQUAL(m.id.size(), 0u);
+    BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::invalid);
+    BOOST_CHECK_EQUAL(m.accepted, false);
+    BOOST_CHECK_EQUAL(m.payload.size(), 0u);
+}
+
+BOOST_AUTO_TEST_CASE(initList) {
+    Gcxp::Message m{Gcxp::Message::Type::notice, false, {}, {}};
+    BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::notice);
+    BOOST_CHECK_EQUAL(m.accepted, false);
+    BOOST_CHECK(m.id.empty());
+    BOOST_CHECK(m.payload.empty());
+    std::ostringstream out;
+    out << m;
+    BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+}
+
+BOOST_AUTO_TEST_CASE(initListWithEquals) {
+    Gcxp::Message m = {Gcxp::Message::Type::notice, false, {}, {}};
+    BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::notice);
+    BOOST_CHECK_EQUAL(m.accepted, false);
+    BOOST_CHECK(m.id.empty());
+    BOOST_CHECK(m.payload.empty());
+    std::ostringstream out;
+    out << m;
+    BOOST_CHECK_EQUAL(out.str(), "INV  I:<EMPTY>");
+}
+
+BOOST_AUTO_TEST_CASE(operatorOut) {
     BOOST_CHECK_NO_THROW({
         Gcxp::Message m;
         std::ostringstream out;
@@ -136,14 +166,6 @@ BOOST_AUTO_TEST_CASE(message) {
         out << m;
         BOOST_CHECK_EQUAL(out.str(), "RSP  A:T I:00000002");
     });
-}
-
-BOOST_AUTO_TEST_CASE(initialization) {
-    Gcxp::Message m;
-    BOOST_CHECK_EQUAL(m.id.size(), 0u);
-    BOOST_CHECK_EQUAL(m.type, Gcxp::Message::Type::invalid);
-    BOOST_CHECK_EQUAL(m.accepted, false);
-    BOOST_CHECK_EQUAL(m.payload.size(), 0u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
