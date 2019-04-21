@@ -21,6 +21,7 @@ endif()
 find_package(Git REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(/permissive-)
 else()
     add_compile_options(-O0)
     add_compile_options(-Wall -Wextra -pedantic -Wold-style-cast)
