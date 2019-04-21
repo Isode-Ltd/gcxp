@@ -3,8 +3,8 @@
 // COPYRIGHT.md file in the top-level folder of the GCXP software
 // distribution.
 #include <gcxp/exception.h>
-#include <boost/test/unit_test.hpp>
 #include <cbor-lite/codec.h>
+#include <boost/test/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE(gcxp)
 BOOST_AUTO_TEST_SUITE(exception)
