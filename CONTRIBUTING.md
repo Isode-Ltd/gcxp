@@ -1,5 +1,5 @@
-Contributing to CBOR-lite
-=========================
+Contributing to GCXP
+====================
 
 Contributions to GCXP are welcomed!
 
