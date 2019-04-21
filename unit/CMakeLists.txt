@@ -2,7 +2,6 @@ enable_testing()
 
 file(GLOB CBOR_UNIT_SOURCES ${CBOR_LITE_UNIT_DIR}/*.cpp)
 list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/fp.cpp")
-list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/unit-main.cpp")
 list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/main.cpp")
 add_executable(unit main.cpp codec.cpp exception.cpp message.cpp ${CBOR_UNIT_SOURCES})
 target_compile_definitions(unit PRIVATE "BOOST_TEST_DYN_LINK=1")
