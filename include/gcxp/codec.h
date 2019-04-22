@@ -86,8 +86,8 @@ typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type 
     std::size_t len = CborLite::decodeArraySize(pos, end, nItems, flags);
     if (nItems < 2) throw Exception("array size too small");
     if (nItems > 4) throw Exception("array size too large");
-    unsigned long type;
 
+    unsigned long type;
     len += CborLite::decodeUnsigned(pos, end, type, flags);
     nItems--;
     m.type = static_cast<Message::Type>(type);
@@ -108,8 +108,8 @@ typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type 
     }
     if (!nItems--) throw Exception("too few items");
     len += CborLite::decodeBytes(pos, end, m.id);
-    if (m.id.size() < 1 || m.id.size() > 256) throw Exception("bad Id length");
     if (m.id.empty()) throw Exception("empty id");
+    if (m.id.size() > 256) throw Exception("id length too large");
 
     if (!nItems) return len;
     len += CborLite::decodeText(pos, end, m.payload, flags);

@@ -1,7 +1,7 @@
 Copyright
 =========
 
-The following notice applies to this work.
+This work is copyright [Isode Limited](https://isode.com) and made available as follows:
 
 ```
 Copyright 2019 Isode Limited.

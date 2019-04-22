@@ -18,7 +18,7 @@ IncludeCategories:
     Priority:        21
   - Regex:           '^<libxml/'
     Priority:        20
-  - Regex:           '^.cbor/'
+  - Regex:           '^.cbor-lite/'
     Priority:        15
   - Regex:           '^.gcxp/'
     Priority:        10
