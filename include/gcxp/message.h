@@ -1,4 +1,8 @@
 #pragma once
+// This file is part of GCXP which is copyright Isode Limited
+// and others and released under a MIT license. For details, see the
+// COPYRIGHT.md file in the top-level folder of the GCXP software
+// distribution.
 #include <iomanip>
 #include <iterator>
 #include <sstream>
@@ -18,8 +22,7 @@ public:
 
     template <typename Type>
     static typename std::enable_if<std::is_arithmetic<Type>::value, Id>::type constructId(Type t) {
-        Id id;
-        id.resize(sizeof t);
+        Id id(sizeof t);
         for (auto i = sizeof t; i; t >>= 8) {
             id[--i] = t & 0xFFu;
         }
@@ -31,6 +34,8 @@ public:
         if (id.empty()) return "<EMPTY>";
 
         std::string s;
+        // reserving floor(id.size()*2.25+1) would be sufficient but id.size()*3 avoids floating-point math
+        s.reserve(id.size() * 3);
         unsigned i = 0;
         for (unsigned ch : id) {
             s += hex[(ch >> 4) & 0x0Fu];
@@ -46,6 +51,7 @@ public:
         if (payload.empty()) return "";
 
         std::string s;
+        s.reserve(payload.size() * 2);
         for (unsigned ch : payload) {
             s += hex[(ch >> 4) & 0x0Fu];
             s += hex[ch & 0x0Fu];
@@ -86,17 +92,18 @@ inline std::ostream& operator<<(std::ostream& out, Message::Type type) {
 inline std::ostream& operator<<(std::ostream& out, const Message& m) {
     switch (m.type) {
     case Message::Type::request:
-        out << "REQ ";
+        out << "REQ";
+        if (m.accepted) out << " A:T";
         break;
     case Message::Type::response:
-        out << "RSP ";
-        out << " A:" << std::string(m.accepted ? "T" : "F");
+        out << "RSP A:" << std::string(m.accepted ? "T" : "F");
         break;
     default:
-        out << "INV ";
+        out << "INV";
+        if (m.accepted) out << " A:T";
     }
     out << " I:" << Message::idToString(m.id);
-    out << " P:" << Message::payloadToString(m.payload);
+    if (!m.payload.empty()) out << " P:" << Message::payloadToString(m.payload);
     return out;
 }
 } // namespace Gcxp

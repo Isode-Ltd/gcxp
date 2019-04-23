@@ -1,7 +1,7 @@
 Copyright
 =========
 
-The following notice applies to this work.
+This work is copyright [Isode Limited](https://isode.com) and made available as follows:
 
 ```
 Copyright 2019 Isode Limited.
@@ -29,7 +29,7 @@ SOFTWARE.
 Contributors
 ------------
 
-None (yet).
+None (yet). See [Contributing Guidelines](./CONTRIBUTING.md).
 
 
 Other notices
@@ -39,9 +39,7 @@ Others have copyright in portions of this work, including:
 
 ### Boost.Asio
 
-Christopher M. Kohlhoff holds copyright in
-[Boost.Asio](http://www.boost.org/doc/libs/release/doc/html/boost_asio.html)
-examples, fragments of which may be present in this work.
+Christopher M. Kohlhoff holds copyright in [Boost.Asio](http://www.boost.org/doc/libs/release/doc/html/boost_asio.html) examples, fragments of which may be present in this work.
 
 ```
 Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
@@ -50,6 +48,4 @@ Distributed under the Boost Software License, Version 1.0. (See accompanying
 file BOOST_LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ```
 
-A verbatim copy of the [Boost Software License, Version
-1.0](http://www.boost.org/LICENSE_1_0.txt) is provided in the file
-[BOOST_LICENSE_1_0.txt](3rdParty/BOOST_LICENSE_1_0.txt).
+A verbatim copy of the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt) is provided in the file [BOOST_LICENSE_1_0.txt](3rdParty/BOOST_LICENSE_1_0.txt).
