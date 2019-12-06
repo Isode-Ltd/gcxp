@@ -19,7 +19,7 @@ public:
     Stream(boost::asio::io_service& io_service, boost::asio::ssl::context& tls) : socket_(io_service, tls) {
     }
 
-    Stream(boost::asio::ip::tcp::socket tcpSocket, boost::asio::ssl::context& tls) : socket_(tcpSocket.get_io_service(), tls) {
+    Stream(boost::asio::ip::tcp::socket tcpSocket, boost::asio::ssl::context& tls) : socket_(tcpSocket.get_executor(), tls) {
         socket_.lowest_layer() = std::move(tcpSocket);
     }
 
