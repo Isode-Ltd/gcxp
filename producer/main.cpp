@@ -215,9 +215,9 @@ int main(int argc, char* argv[]) {
         t.join();
         return EXIT_SUCCESS;
 
-    } catch (Gcxp::Exception& e) {
+    } catch (const Gcxp::Exception& e) {
         std::cerr << e.what() << "\n";
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
     } catch (...) {
         std::cerr << "Unknown exception\n";
