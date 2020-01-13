@@ -164,8 +164,10 @@ int main(int argc, char* argv[]) {
         boost::asio::ip::tcp::resolver resolver(io_service);
         auto endpoint_iterator = resolver.resolve({address, port});
 
-        boost::asio::ssl::context tls(boost::asio::ssl::context::tlsv12_client);
-        tls.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
+        boost::asio::ssl::context tls(boost::asio::ssl::context::tls_client);
+        tls.set_options(boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3 |
+            boost::asio::ssl::context::no_tlsv1 | boost::asio::ssl::context::no_tlsv1_1 |
+            boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
         tls.load_verify_file("./producer/trust.pem");
         tls.set_password_callback([](std::size_t, boost::asio::ssl::context::password_purpose) { return std::string("secret"); });
         tls.use_certificate_chain_file("./producer/identity.pem");
