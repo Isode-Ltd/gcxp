@@ -29,9 +29,6 @@ public:
 
     void start() {
         stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
-        stream_.socket().set_verify_mode(boost::asio::ssl::verify_peer);
-        stream_.socket().set_verify_callback(boost::asio::ssl::rfc2818_verification(peername));
-
         stream_.socket().async_handshake(boost::asio::ssl::stream_base::server,
             boost::bind(&Connection::handleHandshake, this, boost::asio::placeholders::error));
     }
@@ -46,9 +43,7 @@ private:
             std::cerr << "Stream TLS handshake: " << e.message() << "\n";
             return stream_.socket().lowest_layer().close();
         }
-
         std::cerr << "Stream TLS handshake: completed\n";
-
         stream_.asyncWrite(Gcxp::gcxpVersion, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
         stream_.asyncRead(preamble_, boost::bind(&Connection::handlePreamble, this, boost::asio::placeholders::error));
     }
@@ -124,6 +119,7 @@ public:
         : acceptor_(io_service), socket_(io_service), tls_(std::move(tls)) {
         boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
         acceptor_.open(endpoint.protocol());
+        acceptor_.set_option(boost::asio::ip::tcp::no_delay(true));
         acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
         acceptor_.bind(endpoint);
         acceptor_.listen();
@@ -189,6 +185,16 @@ int main(int argc, char* argv[]) {
         tls.use_certificate_chain_file("./consumer/identity.pem");
         tls.use_private_key_file("./consumer/identity.pem", boost::asio::ssl::context::pem);
         tls.use_tmp_dh_file("consumer/dh2048.pem");
+
+        tls.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
+        tls.set_verify_callback(boost::asio::ssl::rfc2818_verification(Consumer::peername));
+        auto native_handle = tls.native_handle();
+        {
+            auto param = X509_VERIFY_PARAM_new();
+            X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
+            SSL_CTX_set1_param(native_handle, param);
+            X509_VERIFY_PARAM_free(param);
+        }
 
         Consumer::Server server(io_service, tls, endpoint_iterator);
         io_service.run();
