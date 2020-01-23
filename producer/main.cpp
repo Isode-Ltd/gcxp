@@ -51,12 +51,8 @@ private:
             status(Status::Terminated);
             return;
         }
-
         status(Status::Handshaking);
         stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
-        stream_.socket().set_verify_mode(boost::asio::ssl::verify_peer);
-        stream_.socket().set_verify_callback(boost::asio::ssl::rfc2818_verification(peername));
-
         stream_.socket().async_handshake(boost::asio::ssl::stream_base::client,
             boost::bind(&Connection::handleHandshake, this, boost::asio::placeholders::error));
     }
@@ -173,6 +169,16 @@ int main(int argc, char* argv[]) {
         tls.use_certificate_chain_file("./producer/identity.pem");
         tls.use_private_key_file("./producer/identity.pem", boost::asio::ssl::context::pem);
         tls.use_tmp_dh_file("./producer/dh2048.pem");
+
+        tls.set_verify_mode(boost::asio::ssl::verify_peer);
+        tls.set_verify_callback(boost::asio::ssl::rfc2818_verification(Producer::peername));
+        auto native_handle = tls.native_handle();
+        {
+            auto param = X509_VERIFY_PARAM_new();
+            X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
+            SSL_CTX_set1_param(native_handle, param);
+            X509_VERIFY_PARAM_free(param);
+        }
 
         Producer::Connection c(io_service, tls);
         c.connect(endpoint_iterator);
