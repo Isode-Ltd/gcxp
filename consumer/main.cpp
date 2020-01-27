@@ -21,75 +21,79 @@
 
 namespace Consumer {
 std::string peername("producer.z");
+bool respond = true;
 
-class Connection {
+class Connection : public std::enable_shared_from_this<Connection> {
 public:
     Connection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& tls) : stream_(std::move(socket), tls) {
     }
 
     void start() {
+        auto self(shared_from_this());
         stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
-        stream_.socket().async_handshake(boost::asio::ssl::stream_base::server,
-            boost::bind(&Connection::handleHandshake, this, boost::asio::placeholders::error));
+        stream_.socket().async_handshake(
+            boost::asio::ssl::stream_base::server, [this, self](const boost::system::error_code& e) { handleHandshake(e); });
     }
 
     void write(const Gcxp::Message& msg) {
-        stream_.asyncWrite(msg, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
+        stream_.asyncWrite(msg, [this](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
     }
 
 private:
     void handleHandshake(const boost::system::error_code& e) {
+        auto self(shared_from_this());
         if (e) {
             std::cerr << "Stream TLS handshake: " << e.message() << "\n";
             return stream_.socket().lowest_layer().close();
         }
         std::cerr << "Stream TLS handshake: completed\n";
-        stream_.asyncWrite(Gcxp::gcxpVersion, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
-        stream_.asyncRead(preamble_, boost::bind(&Connection::handlePreamble, this, boost::asio::placeholders::error));
+        stream_.asyncWrite(Gcxp::gcxpVersion, [this, self](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
+        stream_.asyncRead(preamble_, [this, self](const boost::system::error_code& e) { handlePreamble(e); });
     }
 
     void handlePreamble(const boost::system::error_code& e) {
+        auto self(shared_from_this());
         if (e.value() == boost::asio::error::operation_aborted) {
             std::cerr << "Stream Preamble aborted... shutting down TLS...\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            stream_.socket().async_shutdown([this](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
-
         if (e) {
             std::cerr << "Stream Preamble Read: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
 
         std::cout << "GCXP version=" << boost::lexical_cast<std::string>(preamble_) << "\n";
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
+        stream_.asyncRead(msg_, [this, self](const boost::system::error_code& e) { handleRead(e); });
     }
 
     void handleRead(const boost::system::error_code& e) {
-        if (e.value() == boost::asio::error::operation_aborted) {
-            std::cerr << "Stream (read) operation aborted... shutting down TLS...\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
-            return;
-        }
-
+        auto self(shared_from_this());
         if (e) {
-            std::cerr << "Stream Read: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            if (e.value() == boost::asio::error::operation_aborted) {
+                std::cerr << "Stream (read) operation aborted... shutting down TLS...\n";
+            } else {
+                std::cerr << "Stream Read: " << e.message() << "\n";
+            }
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
 
         std::cout << "id=" << Gcxp::Message::idToString(msg_.id)
                   << " payload=" << std::string(msg_.payload.data(), msg_.payload.size()) << "\n";
 
-        Gcxp::Message rsp;
-        rsp.id = std::move(msg_.id);
-        rsp.type = Gcxp::Message::Type::response;
-        rsp.accepted = true;
-        rsp.payload = std::move(msg_.payload);
-        write(rsp);
-        msg_ = Gcxp::Message();
+        if (respond) {
+            Gcxp::Message rsp;
+            rsp.id = std::move(msg_.id);
+            rsp.type = Gcxp::Message::Type::response;
+            rsp.accepted = true;
+            rsp.payload = std::move(msg_.payload);
+            write(rsp);
+        }
 
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
+        msg_ = Gcxp::Message();
+        stream_.asyncRead(msg_, [this, self](const boost::system::error_code& e) { handleRead(e); });
     }
 
     void handleWrite(const boost::system::error_code& e) {
@@ -128,43 +132,40 @@ public:
 
 private:
     void accept() {
-        acceptor_.async_accept(socket_, boost::bind(&Server::handleAccept, this, boost::asio::placeholders::error));
-    }
-
-    void handleAccept(const boost::system::error_code& e) {
-        std::cerr << "Incoming connection from " << socket_.remote_endpoint() << "\n";
-
-        if (e) {
-            std::cerr << "Accept failed:" << e.message() << "\n";
-
-        } else {
-            connection_ = std::make_shared<Connection>(std::move(socket_), tls_);
-            connection_->start();
-        }
-
-        accept();
+        acceptor_.async_accept(socket_, [this](const boost::system::error_code& e) {
+            std::cerr << "Incoming connection from " << socket_.remote_endpoint() << "\n";
+            if (e) {
+                std::cerr << "Accept failed:" << e.message() << "\n";
+            } else {
+                std::make_shared<Connection>(std::move(socket_), tls_)->start();
+            }
+            accept();
+        });
     }
 
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;
     boost::asio::ssl::context tls_;
-
-    std::shared_ptr<Connection> connection_;
 };
-
 } // namespace Consumer
 
 int main(int argc, char* argv[]) {
     try {
-        if (argc == 4) {
+        while (argc > 3) {
             if (std::string(argv[1]) == std::string("-g")) {
                 Consumer::peername = "guard.z";
                 argc--;
                 argv++;
+            } else if (std::string(argv[1]) == std::string("-r")) {
+                Consumer::respond = false;
+                argc--;
+                argv++;
+            } else {
+                break;
             }
         }
         if (argc != 3) {
-            std::cerr << "Usage: consumer <address> <port>\n";
+            std::cerr << "Usage: consumer [-g] [-r] <address> <port>\n";
             return EXIT_FAILURE;
         }
 
