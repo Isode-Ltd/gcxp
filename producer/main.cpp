@@ -30,10 +30,40 @@ public:
         return status_;
     }
 
-    void connect(boost::asio::ip::tcp::resolver::iterator& endpoint_iterator) {
+    void connect(boost::asio::ip::tcp::resolver::results_type& endpoints) {
         status_ = Status::Connecting;
-        boost::asio::async_connect(stream_.socket().lowest_layer(), endpoint_iterator,
-            boost::bind(&Connection::handleConnect, this, boost::asio::placeholders::error));
+        boost::asio::async_connect(stream_.socket().lowest_layer(), endpoints,
+            [this](const boost::system::error_code& e, const boost::asio::ip::tcp::endpoint&) {
+                if (e) {
+                    std::cerr << "Stream connect: " << e.message() << "\n";
+                    status(Status::Terminated);
+                    return;
+                }
+                status(Status::Handshaking);
+                stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
+                stream_.socket().async_handshake(boost::asio::ssl::stream_base::client, [this](const boost::system::error_code& e) {
+                    if (e) {
+                        std::cerr << "Stream TLS handshake: " << e.message() << "\n";
+                        stream_.socket().lowest_layer().close();
+                        status(Status::Terminated);
+                        return;
+                    }
+                    status(Status::Active);
+                    std::cerr << "Stream TLS handshake: completed\n";
+                    stream_.asyncWrite(
+                        Gcxp::gcxpVersion, [this](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
+                    stream_.asyncRead(preamble_, [this](const boost::system::error_code& e) {
+                        if (e || preamble_ != Gcxp::gcxpVersion) {
+                            status(Status::Terminating);
+                            std::cerr << "Stream Preamble: " << (e ? e.message() : "version mismatch") << "\n";
+                            stream_.socket().async_shutdown([this](const boost::system::error_code& e) { handleShutdown(e); });
+                            return;
+                        }
+                        std::cerr << "Stream starting: GCXP version: " << boost::lexical_cast<std::string>(preamble_) << "\n";
+                        stream_.asyncRead(msg_, [this](const boost::system::error_code& e) { handleRead(e); });
+                    });
+                });
+            });
     }
 
     void stop() {
@@ -41,58 +71,15 @@ public:
     }
 
     void write(const Gcxp::Message& req) {
-        stream_.asyncWrite(req, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
+        stream_.asyncWrite(req, [this](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
     }
 
 private:
-    void handleConnect(const boost::system::error_code& e) {
-        if (e) {
-            std::cerr << "Stream connect: " << e.message() << "\n";
-            status(Status::Terminated);
-            return;
-        }
-        status(Status::Handshaking);
-        stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
-        stream_.socket().async_handshake(boost::asio::ssl::stream_base::client,
-            boost::bind(&Connection::handleHandshake, this, boost::asio::placeholders::error));
-    }
-
-    void handleHandshake(const boost::system::error_code& e) {
-        if (e) {
-            std::cerr << "Stream TLS handshake: " << e.message() << "\n";
-            stream_.socket().lowest_layer().close();
-            status(Status::Terminated);
-            return;
-        }
-        status(Status::Active);
-        std::cerr << "Stream TLS handshake: completed\n";
-
-        stream_.asyncWrite(Gcxp::gcxpVersion, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
-        stream_.asyncRead(preamble_, boost::bind(&Connection::handlePreamble, this, boost::asio::placeholders::error));
-    }
-
-    void handlePreamble(const boost::system::error_code& e) {
-        if (e) {
-            status(Status::Terminating);
-            std::cerr << "Stream Preamble: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
-            return;
-        } else if (preamble_ != Gcxp::gcxpVersion) {
-            status(Status::Terminating);
-            std::cerr << "Stream Preamble: version mismatch\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
-            return;
-        }
-
-        std::cerr << "Stream starting: GCXP version: " << boost::lexical_cast<std::string>(preamble_) << "\n";
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
-    }
-
     void handleRead(const boost::system::error_code& e) {
         if (e) {
             status(Status::Terminating);
             std::cerr << "Stream Read: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            stream_.socket().async_shutdown([this](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
 
@@ -107,7 +94,7 @@ private:
             std::cout << "No payload.\n";
         }
         msg_ = Gcxp::Message();
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
+        stream_.asyncRead(msg_, [this](const boost::system::error_code& e) { handleRead(e); });
     }
 
     void handleWrite(const boost::system::error_code& e) {
@@ -136,7 +123,6 @@ private:
     Gcxp::Message msg_;
     Status status_;
 };
-
 } // namespace Producer
 
 int main(int argc, char* argv[]) {
@@ -152,13 +138,12 @@ int main(int argc, char* argv[]) {
             std::cerr << "Usage: [-g] producer <address> <port>\n";
             return EXIT_FAILURE;
         }
-
         const auto address = argv[1];
         const auto port = argv[2];
 
         boost::asio::io_service io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
-        auto endpoint_iterator = resolver.resolve({address, port});
+        auto endpoints = resolver.resolve({address, port});
 
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_client);
         tls.set_options(boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3 |
@@ -181,7 +166,7 @@ int main(int argc, char* argv[]) {
         }
 
         Producer::Connection c(io_service, tls);
-        c.connect(endpoint_iterator);
+        c.connect(endpoints);
 
         // note: access to c from thread t and the main thread should be synchronized.
         std::thread t([&io_service]() { io_service.run(); });
@@ -196,7 +181,6 @@ int main(int argc, char* argv[]) {
 
         } else {
             std::cerr << "Connected!\n";
-
             std::vector<char> line(4096);
             for (auto i = 1; std::cin.getline(line.data(), line.size()); ++i) {
                 if (c.status() != Producer::Connection::Status::Active) {
@@ -230,6 +214,5 @@ int main(int argc, char* argv[]) {
     } catch (...) {
         std::cerr << "Unknown exception\n";
     }
-
     return EXIT_FAILURE;
 }

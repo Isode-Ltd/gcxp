@@ -4,7 +4,7 @@ Copyright
 This work is copyright [Isode Limited](https://isode.com) and made available as follows:
 
 ```
-Copyright 2019 Isode Limited.
+Copyright 2020 Isode Limited.
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
