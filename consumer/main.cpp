@@ -36,7 +36,8 @@ public:
     }
 
     void write(const Gcxp::Message& msg) {
-        stream_.asyncWrite(msg, [this](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
+        auto self(shared_from_this());
+        stream_.asyncWrite(msg, [this, self](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
     }
 
 private:
@@ -55,7 +56,7 @@ private:
         auto self(shared_from_this());
         if (e.value() == boost::asio::error::operation_aborted) {
             std::cerr << "Stream Preamble aborted... shutting down TLS...\n";
-            stream_.socket().async_shutdown([this](const boost::system::error_code& e) { handleShutdown(e); });
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
         if (e) {
