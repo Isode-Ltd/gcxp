@@ -65,7 +65,9 @@ set(Boost_USE_STATIC_LIB ON)
 find_package(Boost REQUIRED COMPONENTS thread system OPTIONAL_COMPONENTS unit_test_framework)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_NO_AUTO_PTR)
-add_definitions(-DBOOST_ASIO_HAS_STD_STRING_VIEW)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|BSD")
+    add_definitions(-DBOOST_ASIO_HAS_STD_STRING_VIEW)
+endif()
 
 link_libraries(${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
