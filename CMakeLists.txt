@@ -62,7 +62,7 @@ link_libraries(Threads::Threads)
 
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 set(Boost_USE_STATIC_LIB ON)
-find_package(Boost 1.81 REQUIRED COMPONENTS thread system OPTIONAL_COMPONENTS unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS thread system OPTIONAL_COMPONENTS unit_test_framework)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_NO_AUTO_PTR)
 add_definitions(-DBOOST_ASIO_HAS_STD_STRING_VIEW)
