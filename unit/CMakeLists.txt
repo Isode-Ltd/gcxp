@@ -4,12 +4,9 @@ file(GLOB CBOR_UNIT_SOURCES ${CBOR_LITE_UNIT_DIR}/*.cpp)
 list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/fp.cpp")
 list(REMOVE_ITEM CBOR_UNIT_SOURCES "${CBOR_LITE_UNIT_DIR}/main.cpp")
 add_executable(unit main.cpp codec.cpp exception.cpp message.cpp ${CBOR_UNIT_SOURCES})
+target_sources(unit PRIVATE stream.cpp)
 target_compile_definitions(unit PRIVATE "BOOST_TEST_DYN_LINK=1")
-target_link_libraries(unit PRIVATE Boost::unit_test_framework)
-if(OPENSSL_FOUND)
-    target_sources(unit PRIVATE stream.cpp)
-    target_link_libraries(unit PRIVATE Boost::thread Boost::system)
-endif()
+target_link_libraries(unit PRIVATE ${Boost_UNIT_TEST_FRAMKEWORK_LIBRARY})
 
 add_custom_target(unit-tests
     COMMENT Unit Tests

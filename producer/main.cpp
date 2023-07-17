@@ -146,24 +146,20 @@ int main(int argc, char* argv[]) {
         auto endpoints = resolver.resolve({address, port});
 
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_client);
-        tls.set_options(boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3 |
-            boost::asio::ssl::context::no_tlsv1 | boost::asio::ssl::context::no_tlsv1_1 |
-            boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
-        tls.load_verify_file("./producer/trust.pem");
-        tls.set_password_callback([](std::size_t, boost::asio::ssl::context::password_purpose) { return std::string("secret"); });
-        tls.use_certificate_chain_file("./producer/identity.pem");
-        tls.use_private_key_file("./producer/identity.pem", boost::asio::ssl::context::pem);
-        tls.use_tmp_dh_file("./producer/dh2048.pem");
-
-        tls.set_verify_mode(boost::asio::ssl::verify_peer);
-        tls.set_verify_callback(boost::asio::ssl::rfc2818_verification(Producer::peername));
         auto native_handle = tls.native_handle();
+        SSL_CTX_set_min_proto_version(native_handle, TLS1_3_VERSION);
         {
             auto param = X509_VERIFY_PARAM_new();
             X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
             SSL_CTX_set1_param(native_handle, param);
             X509_VERIFY_PARAM_free(param);
         }
+        if (SSL_CTX_config(native_handle, "gcxp") == 0) {
+            std::cerr << "Unable to load GCXP TLS configuration\n";
+            return EXIT_FAILURE;
+        }
+        tls.set_verify_mode(boost::asio::ssl::verify_peer);
+        tls.set_verify_callback(boost::asio::ssl::host_name_verification(Producer::peername));
 
         Producer::Connection c(io_service, tls);
         c.connect(endpoints);
