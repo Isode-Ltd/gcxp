@@ -17,8 +17,6 @@
 #include <thread>
 
 namespace Producer {
-std::string peername("consumer.z");
-
 class Connection {
 public:
     Connection(boost::asio::io_service& io_service, boost::asio::ssl::context& tls)
@@ -127,19 +125,13 @@ private:
 
 int main(int argc, char* argv[]) {
     try {
-        if (argc == 4) {
-            if (std::string(argv[1]) == std::string("-g")) {
-                Producer::peername = "guard.z";
-                argc--;
-                argv++;
-            }
-        }
-        if (argc != 3) {
-            std::cerr << "Usage: [-g] producer <address> <port>\n";
+        if (argc != 4) {
+            std::cerr << "Usage: producer <peer> <address> <port>\n";
             return EXIT_FAILURE;
         }
-        const auto address = argv[1];
-        const auto port = argv[2];
+        const auto peer = argv[1];
+        const auto address = argv[2];
+        const auto port = argv[3];
 
         boost::asio::io_service io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
@@ -159,7 +151,7 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
         tls.set_verify_mode(boost::asio::ssl::verify_peer);
-        tls.set_verify_callback(boost::asio::ssl::host_name_verification(Producer::peername));
+        tls.set_verify_callback(boost::asio::ssl::host_name_verification(peer));
 
         Producer::Connection c(io_service, tls);
         c.connect(endpoints);

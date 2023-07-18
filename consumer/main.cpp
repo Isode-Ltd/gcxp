@@ -20,7 +20,6 @@
 #include <utility>
 
 namespace Consumer {
-std::string peername("producer.z");
 bool respond = true;
 
 class Connection : public std::enable_shared_from_this<Connection> {
@@ -152,12 +151,8 @@ private:
 
 int main(int argc, char* argv[]) {
     try {
-        while (argc > 3) {
-            if (std::string(argv[1]) == std::string("-g")) {
-                Consumer::peername = "guard.z";
-                argc--;
-                argv++;
-            } else if (std::string(argv[1]) == std::string("-r")) {
+        while (argc > 4) {
+            if (std::string(argv[1]) == std::string("-r")) {
                 Consumer::respond = false;
                 argc--;
                 argv++;
@@ -165,13 +160,14 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
-        if (argc != 3) {
-            std::cerr << "Usage: consumer [-g] [-r] <address> <port>\n";
+        if (argc != 4) {
+            std::cerr << "Usage: consumer [-r] <peer> <address> <port>\n";
             return EXIT_FAILURE;
         }
 
-        const auto address = argv[1];
-        const auto port = argv[2];
+        const auto peer = argv[1];
+        const auto address = argv[2];
+        const auto port = argv[3];
 
         boost::asio::io_service io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
@@ -191,7 +187,7 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
         tls.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
-        tls.set_verify_callback(boost::asio::ssl::host_name_verification(Consumer::peername));
+        tls.set_verify_callback(boost::asio::ssl::host_name_verification(peer));
 
         Consumer::Server server(io_service, tls, endpoint_iterator);
         io_service.run();
