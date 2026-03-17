@@ -19,7 +19,7 @@
 namespace Producer {
 class Connection {
 public:
-    Connection(boost::asio::io_service& io_service, boost::asio::ssl::context& tls)
+    Connection(boost::asio::io_context& io_service, boost::asio::ssl::context& tls)
         : stream_(io_service, tls), status_(Status::Inactive) {
     }
 
@@ -133,9 +133,9 @@ int main(int argc, char* argv[]) {
         const auto address = argv[2];
         const auto port = argv[3];
 
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
-        auto endpoints = resolver.resolve({address, port});
+        auto endpoints = resolver.resolve(address,port);
 
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_client);
         auto native_handle = tls.native_handle();
