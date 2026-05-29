@@ -1,9 +1,5 @@
-cmake_minimum_required (VERSION 3.9.5 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.28.3 FATAL_ERROR)
 project (gcxp)
-
-if(POLICY CMP0076)
-    cmake_policy(SET CMP0076 OLD)
-endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
