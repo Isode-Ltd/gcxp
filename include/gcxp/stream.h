@@ -16,7 +16,7 @@ namespace Gcxp {
 using Buffer = std::vector<char>;
 class Stream {
 public:
-    Stream(boost::asio::io_service& io_service, boost::asio::ssl::context& tls) : socket_(io_service, tls) {
+    Stream(boost::asio::io_context& io_service, boost::asio::ssl::context& tls) : socket_(io_service, tls) {
     }
 
     Stream(boost::asio::ip::tcp::socket tcpSocket, boost::asio::ssl::context& tls) : socket_(tcpSocket.get_executor(), tls) {

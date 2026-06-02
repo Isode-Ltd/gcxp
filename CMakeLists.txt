@@ -1,8 +1,8 @@
-cmake_minimum_required (VERSION 3.9.5 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.28.3 FATAL_ERROR)
 project (gcxp)
 
-if(POLICY CMP0076)
-    cmake_policy(SET CMP0076 OLD)
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
@@ -66,9 +66,10 @@ endif()
 
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 set(Boost_USE_STATIC_LIB ON)
-find_package(Boost REQUIRED COMPONENTS thread system OPTIONAL_COMPONENTS unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS thread OPTIONAL_COMPONENTS unit_test_framework)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_NO_AUTO_PTR)
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|BSD")
     add_definitions(-DBOOST_ASIO_HAS_STD_STRING_VIEW)
 endif()

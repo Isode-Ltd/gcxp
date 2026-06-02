@@ -118,8 +118,8 @@ private:
 
 class Server {
 public:
-    Server(boost::asio::io_service& io_service, boost::asio::ssl::context& tls,
-        boost::asio::ip::tcp::resolver::iterator& endpoint_iterator)
+    Server(boost::asio::io_context& io_service, boost::asio::ssl::context& tls,
+        boost::asio::ip::basic_resolver_results<boost::asio::ip::tcp>::iterator& endpoint_iterator)
         : acceptor_(io_service), socket_(io_service), tls_(std::move(tls)) {
         boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
         acceptor_.open(endpoint.protocol());
@@ -169,9 +169,9 @@ int main(int argc, char* argv[]) {
         const auto address = argv[2];
         const auto port = argv[3];
 
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
-        auto endpoint_iterator = resolver.resolve({address, port});
+        auto endpoint_iterator = resolver.resolve(address, port).begin();
 
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_server);
         auto native_handle = tls.native_handle();
