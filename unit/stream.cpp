@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_SUITE(stream)
 
 BOOST_AUTO_TEST_CASE(server) {
     BOOST_CHECK_NO_THROW({
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_server);
         boost::asio::ip::tcp::socket tcpSocket{io_service};
         BOOST_CHECK_EQUAL(tcpSocket.is_open(), false);
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(server) {
 
 BOOST_AUTO_TEST_CASE(client) {
     BOOST_CHECK_NO_THROW({
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_client);
         Gcxp::Stream stream(io_service, tls);
     });

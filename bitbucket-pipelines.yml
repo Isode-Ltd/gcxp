@@ -4,6 +4,8 @@ pipelines:
     - step:
         name: build and test
         script:
-          - cmake -G Ninja .
+          - mkdir build
+          - cd build
+          - cmake -G Ninja ..
           - ninja
           - ninja junit

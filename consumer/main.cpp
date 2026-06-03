@@ -20,76 +20,80 @@
 #include <utility>
 
 namespace Consumer {
-std::string peername("producer.z");
+bool respond = true;
 
-class Connection {
+class Connection : public std::enable_shared_from_this<Connection> {
 public:
     Connection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& tls) : stream_(std::move(socket), tls) {
     }
 
     void start() {
+        auto self(shared_from_this());
         stream_.socket().lowest_layer().set_option(boost::asio::ip::tcp::no_delay(true));
-        stream_.socket().async_handshake(boost::asio::ssl::stream_base::server,
-            boost::bind(&Connection::handleHandshake, this, boost::asio::placeholders::error));
+        stream_.socket().async_handshake(
+            boost::asio::ssl::stream_base::server, [this, self](const boost::system::error_code& e) { handleHandshake(e); });
     }
 
     void write(const Gcxp::Message& msg) {
-        stream_.asyncWrite(msg, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
+        auto self(shared_from_this());
+        stream_.asyncWrite(msg, [this, self](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
     }
 
 private:
     void handleHandshake(const boost::system::error_code& e) {
+        auto self(shared_from_this());
         if (e) {
             std::cerr << "Stream TLS handshake: " << e.message() << "\n";
             return stream_.socket().lowest_layer().close();
         }
         std::cerr << "Stream TLS handshake: completed\n";
-        stream_.asyncWrite(Gcxp::gcxpVersion, boost::bind(&Connection::handleWrite, this, boost::asio::placeholders::error));
-        stream_.asyncRead(preamble_, boost::bind(&Connection::handlePreamble, this, boost::asio::placeholders::error));
+        stream_.asyncWrite(Gcxp::gcxpVersion, [this, self](const boost::system::error_code& e, std::size_t) { handleWrite(e); });
+        stream_.asyncRead(preamble_, [this, self](const boost::system::error_code& e) { handlePreamble(e); });
     }
 
     void handlePreamble(const boost::system::error_code& e) {
+        auto self(shared_from_this());
         if (e.value() == boost::asio::error::operation_aborted) {
             std::cerr << "Stream Preamble aborted... shutting down TLS...\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
-
         if (e) {
             std::cerr << "Stream Preamble Read: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
 
         std::cout << "GCXP version=" << boost::lexical_cast<std::string>(preamble_) << "\n";
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
+        stream_.asyncRead(msg_, [this, self](const boost::system::error_code& e) { handleRead(e); });
     }
 
     void handleRead(const boost::system::error_code& e) {
-        if (e.value() == boost::asio::error::operation_aborted) {
-            std::cerr << "Stream (read) operation aborted... shutting down TLS...\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
-            return;
-        }
-
+        auto self(shared_from_this());
         if (e) {
-            std::cerr << "Stream Read: " << e.message() << "\n";
-            stream_.socket().async_shutdown(boost::bind(&Connection::handleShutdown, this, boost::asio::placeholders::error));
+            if (e.value() == boost::asio::error::operation_aborted) {
+                std::cerr << "Stream (read) operation aborted... shutting down TLS...\n";
+            } else {
+                std::cerr << "Stream Read: " << e.message() << "\n";
+            }
+            stream_.socket().async_shutdown([this, self](const boost::system::error_code& e) { handleShutdown(e); });
             return;
         }
 
         std::cout << "id=" << Gcxp::Message::idToString(msg_.id)
                   << " payload=" << std::string(msg_.payload.data(), msg_.payload.size()) << "\n";
 
-        Gcxp::Message rsp;
-        rsp.id = std::move(msg_.id);
-        rsp.type = Gcxp::Message::Type::response;
-        rsp.accepted = true;
-        rsp.payload = std::move(msg_.payload);
-        write(rsp);
-        msg_ = Gcxp::Message();
+        if (respond) {
+            Gcxp::Message rsp;
+            rsp.id = std::move(msg_.id);
+            rsp.type = Gcxp::Message::Type::response;
+            rsp.accepted = true;
+            rsp.payload = std::move(msg_.payload);
+            write(rsp);
+        }
 
-        stream_.asyncRead(msg_, boost::bind(&Connection::handleRead, this, boost::asio::placeholders::error));
+        msg_ = Gcxp::Message();
+        stream_.asyncRead(msg_, [this, self](const boost::system::error_code& e) { handleRead(e); });
     }
 
     void handleWrite(const boost::system::error_code& e) {
@@ -114,8 +118,8 @@ private:
 
 class Server {
 public:
-    Server(boost::asio::io_service& io_service, boost::asio::ssl::context& tls,
-        boost::asio::ip::tcp::resolver::iterator& endpoint_iterator)
+    Server(boost::asio::io_context& io_service, boost::asio::ssl::context& tls,
+        boost::asio::ip::basic_resolver_results<boost::asio::ip::tcp>::iterator& endpoint_iterator)
         : acceptor_(io_service), socket_(io_service), tls_(std::move(tls)) {
         boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
         acceptor_.open(endpoint.protocol());
@@ -128,73 +132,62 @@ public:
 
 private:
     void accept() {
-        acceptor_.async_accept(socket_, boost::bind(&Server::handleAccept, this, boost::asio::placeholders::error));
-    }
-
-    void handleAccept(const boost::system::error_code& e) {
-        std::cerr << "Incoming connection from " << socket_.remote_endpoint() << "\n";
-
-        if (e) {
-            std::cerr << "Accept failed:" << e.message() << "\n";
-
-        } else {
-            connection_ = std::make_shared<Connection>(std::move(socket_), tls_);
-            connection_->start();
-        }
-
-        accept();
+        acceptor_.async_accept(socket_, [this](const boost::system::error_code& e) {
+            std::cerr << "Incoming connection from " << socket_.remote_endpoint() << "\n";
+            if (e) {
+                std::cerr << "Accept failed:" << e.message() << "\n";
+            } else {
+                std::make_shared<Connection>(std::move(socket_), tls_)->start();
+            }
+            accept();
+        });
     }
 
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;
     boost::asio::ssl::context tls_;
-
-    std::shared_ptr<Connection> connection_;
 };
-
 } // namespace Consumer
 
 int main(int argc, char* argv[]) {
     try {
-        if (argc == 4) {
-            if (std::string(argv[1]) == std::string("-g")) {
-                Consumer::peername = "guard.z";
+        while (argc > 4) {
+            if (std::string(argv[1]) == std::string("-r")) {
+                Consumer::respond = false;
                 argc--;
                 argv++;
+            } else {
+                break;
             }
         }
-        if (argc != 3) {
-            std::cerr << "Usage: consumer <address> <port>\n";
+        if (argc != 4) {
+            std::cerr << "Usage: consumer [-r] <peer> <address> <port>\n";
             return EXIT_FAILURE;
         }
 
-        const auto address = argv[1];
-        const auto port = argv[2];
+        const auto peer = argv[1];
+        const auto address = argv[2];
+        const auto port = argv[3];
 
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
-        auto endpoint_iterator = resolver.resolve({address, port});
+        auto endpoint_iterator = resolver.resolve(address, port).begin();
 
         boost::asio::ssl::context tls(boost::asio::ssl::context::tls_server);
-        tls.set_options(boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3 |
-            boost::asio::ssl::context::no_tlsv1 | boost::asio::ssl::context::no_tlsv1_1 |
-            boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::single_dh_use);
-
-        tls.load_verify_file("./consumer/trust.pem");
-        tls.set_password_callback([](std::size_t, boost::asio::ssl::context::password_purpose) { return "secret"; });
-        tls.use_certificate_chain_file("./consumer/identity.pem");
-        tls.use_private_key_file("./consumer/identity.pem", boost::asio::ssl::context::pem);
-        tls.use_tmp_dh_file("consumer/dh2048.pem");
-
-        tls.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
-        tls.set_verify_callback(boost::asio::ssl::rfc2818_verification(Consumer::peername));
         auto native_handle = tls.native_handle();
+        SSL_CTX_set_min_proto_version(native_handle, TLS1_3_VERSION);
         {
             auto param = X509_VERIFY_PARAM_new();
             X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
             SSL_CTX_set1_param(native_handle, param);
             X509_VERIFY_PARAM_free(param);
         }
+        if (SSL_CTX_config(native_handle, "gcxp") == 0) {
+            std::cerr << "Unable to load GCXP TLS configuration\n";
+            return EXIT_FAILURE;
+        }
+        tls.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
+        tls.set_verify_callback(boost::asio::ssl::host_name_verification(peer));
 
         Consumer::Server server(io_service, tls, endpoint_iterator);
         io_service.run();
