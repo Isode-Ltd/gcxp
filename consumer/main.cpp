@@ -8,6 +8,7 @@
 //
 #include <gcxp/message.h>
 #include <gcxp/stream.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/lexical_cast.hpp>
@@ -149,25 +150,34 @@ private:
 };
 } // namespace Consumer
 
+void inline print_usage() {
+    std::cerr << "Usage: consumer [-r] <peer> <address> <port>\n";
+}
+
 int main(int argc, char* argv[]) {
     try {
-        while (argc > 4) {
-            if (std::string(argv[1]) == std::string("-r")) {
+        argc--;
+        argv++;
+
+        while (argc > 0 && boost::algorithm::starts_with(argv[0],"-")) {
+            if (std::string(argv[0]) == std::string("-r")) {
                 Consumer::respond = false;
                 argc--;
                 argv++;
             } else {
-                break;
+                print_usage();
+                return EXIT_FAILURE;
             }
         }
-        if (argc != 4) {
-            std::cerr << "Usage: consumer [-r] <peer> <address> <port>\n";
+
+        if (argc != 3) {
+            print_usage();
             return EXIT_FAILURE;
         }
 
-        const auto peer = argv[1];
-        const auto address = argv[2];
-        const auto port = argv[3];
+        const auto peer = argv[0];
+        const auto address = argv[1];
+        const auto port = argv[2];
 
         boost::asio::io_context io_service;
         boost::asio::ip::tcp::resolver resolver(io_service);
