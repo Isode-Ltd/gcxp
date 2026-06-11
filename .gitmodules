@@ -1,4 +1,4 @@
 [submodule "external/cbor-lite"]
 	path = external/cbor-lite
-	url = git@github.com:Isode-Ltd/cbor-lite.git
+	url = https://github.com/Isode-Ltd/cbor-lite.git
 	branch = production

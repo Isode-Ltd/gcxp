@@ -12,7 +12,7 @@ Other tools used in developing and maintaining this implementation include [LLVM
   * [producer](./producer) - producer example program
   * [unit](./unit) - unit tests
 
-More information about GCXP is available at [https://bitbucket.org/isode/gcxp/wiki/Home](https://bitbucket.org/isode/gcxp/wiki/Home).
+More information about GCXP is available at [https://github.com/Isode-Ltd/gcxp/wiki](https://github.com/Isode-Ltd/gcxp/wiki).
 
 Contributing
 ------------
