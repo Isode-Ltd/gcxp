@@ -1,0 +1,26 @@
+name: Build and Test gcxp
+run-name: Build and test triggered by changes from ${{ github.triggering_actor }}
+
+on: [push,pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Install Required Libraries And Tools
+      # Requires cmake, Ninja and boost librarires
+      run: |
+        sudo apt install cmake ninja-build libboost-all-dev -y 
+    
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+
+    - name: Generate Build Files
+      # Generate Ninja build files using Cmake
+      working-directory: ${{github.workspace}}
+      run: cmake -B build -G Ninja
+      
+    - name: Build code and unit tests
+      # Builds the code and runs the unit test
+      working-directory: ${{github.workspace}}/build
+      run: ninja unit-tests
