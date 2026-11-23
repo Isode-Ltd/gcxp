@@ -11,7 +11,7 @@
 
 namespace Gcxp {
 using Version = std::uint_fast64_t;
-constexpr Version gcxpVersion = 0;
+constexpr Version gcxpVersion = 1;
 
 template <typename Type>
 void checkVersion(Type v) {
@@ -64,6 +64,9 @@ static typename std::enable_if<std::is_class<Buffer>::value, std::size_t>::type 
     case Message::Type::response:
         len = CborLite::encodeArraySize(buffer, m.payload.empty() ? 3ul : 4ul);
         break;
+    case Message::Type::healthcheck:
+        len = CborLite::encodeArraySize(buffer, m.payload.empty() ? 2ul : 3ul);
+        break;
     default:
         throw Exception("bad Type");
     }
@@ -94,6 +97,7 @@ typename std::enable_if<std::is_class<InputIterator>::value, std::size_t>::type 
     switch (m.type) {
     case Message::Type::request:
     case Message::Type::response:
+    case Message::Type::healthcheck:
         break;
     default:
         throw Exception("bad message type");

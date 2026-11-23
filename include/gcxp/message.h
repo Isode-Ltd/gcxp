@@ -13,7 +13,8 @@ class Message {
 public:
     using Id = std::vector<unsigned char>;
     using Payload = std::vector<char>;
-    enum class Type { invalid = 0, notice, request, response };
+    enum class Type { invalid = 0, notice, request, response, healthcheck };
+    enum class HealthcheckType : char { check = 'c', response = 'r', error = 'e' };
 
     Type type = Type::invalid;
     bool accepted = false;
@@ -59,6 +60,15 @@ public:
         return s;
     }
 
+    inline void setHealthcheckType(HealthcheckType type) {
+        payload.assign({static_cast<char>(type)});
+    }
+
+    inline HealthcheckType getHealthcheckType() const {
+        if (payload.empty()) throw std::runtime_error("Payload is empty");
+        return static_cast<HealthcheckType>(payload[0]);
+    }
+
     bool operator==(const Message& other) const {
         if (type != other.type) return false;
         if (accepted != other.accepted) return false;
@@ -97,6 +107,25 @@ inline std::ostream& operator<<(std::ostream& out, const Message& m) {
         break;
     case Message::Type::response:
         out << "RSP A:" << std::string(m.accepted ? "T" : "F");
+        break;
+    case Message::Type::healthcheck:
+        out << "HCQ ";
+        if (!m.payload.empty()) {
+            switch (m.getHealthcheckType()) {
+            case Message::HealthcheckType::check:
+                out << "CHECK";
+                break;
+            case Message::HealthcheckType::response:
+                out << "RESP";
+                break;
+            case Message::HealthcheckType::error:
+                out << "ERR";
+                break;
+            default:
+                out << "UNKNOWN";
+                break;
+            }
+        }
         break;
     default:
         out << "INV";

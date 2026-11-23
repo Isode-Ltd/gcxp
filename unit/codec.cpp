@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(preamble) {
         BOOST_CHECK_EQUAL(len, Gcxp::Codec::preambleReadAmount);
         std::string got(std::begin(buffer), std::end(buffer));
         BOOST_CHECK_EQUAL(got.length(), Gcxp::Codec::preambleReadAmount);
-        BOOST_CHECK_EQUAL(got, std::string("\xd9\xd9\xf7\x00", 4));
+        BOOST_CHECK_EQUAL(got, std::string("\xd9\xd9\xf7\x01", 4));
     });
     BOOST_CHECK_NO_THROW({
         auto version = ~Gcxp::gcxpVersion;
@@ -51,6 +51,27 @@ BOOST_AUTO_TEST_CASE(codec) {
             "\x03"
             "\xf4"
             "\x44\x40\x40\x40\x40",
+            3},
+        {{Gcxp::Message::Type::healthcheck, false, {'@', '@', '@', '@'}, {'c'}},
+            "\xd8\x18\x49"
+            "\x83"
+            "\x04"
+            "\x44\x40\x40\x40\x40"
+            "\x61\x63",
+            3},
+        {{Gcxp::Message::Type::healthcheck, false, {'@', '@', '@', '@'}, {'r'}},
+            "\xd8\x18\x49"
+            "\x83"
+            "\x04"
+            "\x44\x40\x40\x40\x40"
+            "\x61\x72",
+            3},
+        {{Gcxp::Message::Type::healthcheck, false, {'@', '@', '@', '@'}, {'e'}},
+            "\xd8\x18\x49"
+            "\x83"
+            "\x04"
+            "\x44\x40\x40\x40\x40"
+            "\x61\x65",
             3},
     };
 
@@ -136,7 +157,7 @@ BOOST_AUTO_TEST_CASE(invalidMessageEncoding) {
         {"\x83", "CBOR Exception: not enough input"},
         {"\x83\x80", "CBOR Exception: not Unsigned"},
         {"\x83\x01", "GCXP Exception: bad message type"},
-        {"\x83\x04", "GCXP Exception: bad message type"},
+        {"\x83\x05", "GCXP Exception: bad message type"},
         {"\x83\x02", "CBOR Exception: not enough input"},
         {"\x83\x03", "CBOR Exception: not enough input"},
         {"\x83\x02\xf4", "CBOR Exception: not ByteString"},

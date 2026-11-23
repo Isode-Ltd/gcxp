@@ -172,6 +172,33 @@ BOOST_AUTO_TEST_CASE(operatorOut) {
         out << m;
         BOOST_CHECK_EQUAL(out.str(), "RSP A:T I:00000002");
     });
+    BOOST_CHECK_NO_THROW({
+        Gcxp::Message m;
+        m.type = Gcxp::Message::Type::healthcheck;
+        m.id = Gcxp::Message::constructId(std::uint32_t(3));
+        std::ostringstream out;
+        m.setHealthcheckType(Gcxp::Message::HealthcheckType::check);
+        out << m;
+        BOOST_CHECK_EQUAL(out.str(), "HCQ CHECK I:00000003 P:63");
+    });
+    BOOST_CHECK_NO_THROW({
+        Gcxp::Message m;
+        m.type = Gcxp::Message::Type::healthcheck;
+        m.id = Gcxp::Message::constructId(std::uint32_t(3));
+        std::ostringstream out;
+        m.setHealthcheckType(Gcxp::Message::HealthcheckType::response);
+        out << m;
+        BOOST_CHECK_EQUAL(out.str(), "HCQ RESP I:00000003 P:72");
+    });
+    BOOST_CHECK_NO_THROW({
+        Gcxp::Message m;
+        m.type = Gcxp::Message::Type::healthcheck;
+        m.id = Gcxp::Message::constructId(std::uint32_t(3));
+        std::ostringstream out;
+        m.setHealthcheckType(Gcxp::Message::HealthcheckType::error);
+        out << m;
+        BOOST_CHECK_EQUAL(out.str(), "HCQ ERR I:00000003 P:65");
+    });
 }
 
 BOOST_AUTO_TEST_SUITE_END()
