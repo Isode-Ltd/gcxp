@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(preamble) {
         BOOST_CHECK_EQUAL(len, Gcxp::Codec::preambleReadAmount);
         std::string got(std::begin(buffer), std::end(buffer));
         BOOST_CHECK_EQUAL(got.length(), Gcxp::Codec::preambleReadAmount);
-        BOOST_CHECK_EQUAL(got, std::string("\xd9\xd9\xf7\x01", 4));
+        BOOST_CHECK_EQUAL(got, std::string("\xd9\xd9\xf7\x00", 4));
     });
     BOOST_CHECK_NO_THROW({
         auto version = ~Gcxp::gcxpVersion;

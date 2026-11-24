@@ -81,16 +81,19 @@ private:
             return;
         }
 
-        std::cout << "id=" << Gcxp::Message::idToString(msg_.id)
-                  << " payload=" << std::string(msg_.payload.data(), msg_.payload.size()) << "\n";
+        if (msg_.type == Gcxp::Message::Type::healthcheck) {
+            std::cout << "Received healthcheck message\n";
+        } else {
+            std::cout << "id=" << Gcxp::Message::idToString(msg_.id)
+                      << " payload=" << std::string(msg_.payload.data(), msg_.payload.size()) << "\n";
 
-        if (respond) {
-            Gcxp::Message rsp;
-            rsp.id = std::move(msg_.id);
-            rsp.type = Gcxp::Message::Type::response;
-            rsp.accepted = true;
-            rsp.payload = std::move(msg_.payload);
-            write(rsp);
+            if (respond) {
+                Gcxp::Message rsp;
+                rsp.id = std::move(msg_.id);
+                rsp.type = Gcxp::Message::Type::response;
+                rsp.accepted = true;
+                write(rsp);
+            }
         }
 
         msg_ = Gcxp::Message();
@@ -159,7 +162,7 @@ int main(int argc, char* argv[]) {
         argc--;
         argv++;
 
-        while (argc > 0 && boost::algorithm::starts_with(argv[0],"-")) {
+        while (argc > 0 && boost::algorithm::starts_with(argv[0], "-")) {
             if (std::string(argv[0]) == std::string("-r")) {
                 Consumer::respond = false;
                 argc--;

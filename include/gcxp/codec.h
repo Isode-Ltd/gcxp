@@ -11,7 +11,7 @@
 
 namespace Gcxp {
 using Version = std::uint_fast64_t;
-constexpr Version gcxpVersion = 1;
+constexpr Version gcxpVersion = 0;
 
 template <typename Type>
 void checkVersion(Type v) {
